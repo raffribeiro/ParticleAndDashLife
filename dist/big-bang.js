@@ -11,7 +11,7 @@ export class BigBang{
   const age=this.tick-this.hold-1;return 1+.7*Math.exp(-age/6)*Math.cos(age*.48);
  }
  get colorMix(){const t=Math.max(0,Math.min(1,(this.tick-this.hold)/(this.duration-this.hold)));return t*t*(3-2*t);}
- get emission(){if(this.tick>=this.duration)return 0;if(this.tick<=this.hold)return .45*Math.pow(this.tick/this.hold,3);return Math.exp(-(this.tick-this.hold-1)/8);}
+ get emission(){if(this.tick>=this.duration)return 0;if(this.tick<=this.hold)return .85*Math.pow(this.tick/this.hold,.65);return Math.exp(-(this.tick-this.hold-1)/8);}
  step(sim,dt=1){
   if(this.tick>=this.duration)return false;this.tick+=dt;
   if(this.tick<=this.hold){

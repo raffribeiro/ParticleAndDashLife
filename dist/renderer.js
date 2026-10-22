@@ -1,15 +1,15 @@
-import {openingColors} from './opening-colors.js?v=1.25.5';
-import {canvasSize} from './canvas-size.js?v=1.25.5';
-import {FarParticles} from './far-particles.js?v=1.25.5';
-import {splitDrawLayers} from './draw-order.js?v=1.25.5';
-import {EventEffects} from './effects.js?v=1.25.5';
-import {TrailHistory} from './trail-history.js?v=1.25.5';
-import {CurvedTrails} from './curved-trails.js?v=1.25.5';
-import {COLORS} from './simulation.js?v=1.25.5';
-import {Bloom} from './bloom.js?v=1.25.5';
-import {Backdrop} from './backdrop.js?v=1.25.5';
-import {CreatureMesh} from './creature-mesh.js?v=1.25.5';
-import {DEFAULT_PALETTE} from './color.js?v=1.25.5';
+import {openingColors} from './opening-colors.js?v=1.25.6';
+import {canvasSize} from './canvas-size.js?v=1.25.6';
+import {FarParticles} from './far-particles.js?v=1.25.6';
+import {splitDrawLayers} from './draw-order.js?v=1.25.6';
+import {EventEffects} from './effects.js?v=1.25.6';
+import {TrailHistory} from './trail-history.js?v=1.25.6';
+import {CurvedTrails} from './curved-trails.js?v=1.25.6';
+import {COLORS} from './simulation.js?v=1.25.6';
+import {Bloom} from './bloom.js?v=1.25.6';
+import {Backdrop} from './backdrop.js?v=1.25.6';
+import {CreatureMesh} from './creature-mesh.js?v=1.25.6';
+import {DEFAULT_PALETTE} from './color.js?v=1.25.6';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {

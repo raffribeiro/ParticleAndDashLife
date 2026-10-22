@@ -1,13 +1,13 @@
-import {BigBang} from './big-bang.js?v=1.25.5';
-import {mergeChanged} from './pending-changes.js?v=1.25.5';
-import {DoubleTap} from './tap-gesture.js?v=1.25.5';
-import {canvasSize} from './canvas-size.js?v=1.25.5';
-import {FrameClock} from './timing.js?v=1.25.5';
+import {BigBang} from './big-bang.js?v=1.25.6';
+import {mergeChanged} from './pending-changes.js?v=1.25.6';
+import {DoubleTap} from './tap-gesture.js?v=1.25.6';
+import {canvasSize} from './canvas-size.js?v=1.25.6';
+import {FrameClock} from './timing.js?v=1.25.6';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.25.5';
+let lowFps=0,lowUntil=0;export const VERSION='1.25.6';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.25.5';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.25.5';import {Renderer} from './renderer.js?v=1.25.5';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.25.6';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.25.6';import {Renderer} from './renderer.js?v=1.25.6';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
