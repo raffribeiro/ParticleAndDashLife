@@ -57,7 +57,7 @@ export class CurvedTrails {
   gl.bindBuffer(gl.ARRAY_BUFFER,this.ids);gl.enableVertexAttribArray(5);gl.vertexAttribPointer(5,1,gl.FLOAT,false,0,0);ext.vertexAttribDivisorANGLE(5,1);
   gl.bindBuffer(gl.ARRAY_BUFFER,this.mesh);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);ext.vertexAttribDivisorANGLE(0,0);
   const u=this.uniforms;gl.uniform1i(u.historyTexture,0);gl.uniform2f(u.textureSize,h.textureWidth,h.textureHeight);gl.uniform1f(u.columns,h.columns);gl.uniform1f(u.newest,h.newest);gl.uniform1f(u.samples,h.valid);
-  gl.uniform2f(u.world,s.width,s.height);gl.uniform2f(u.viewport,innerWidth,innerHeight);gl.uniform1f(u.prediction,predict);gl.uniform1f(u.amount,amount);
+  gl.uniform2f(u.world,s.width,s.height);gl.uniform2f(u.viewport,s.width,s.height);gl.uniform1f(u.prediction,predict);gl.uniform1f(u.amount,amount);
   ext.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,74,s.count);
  }
  initFallback(){

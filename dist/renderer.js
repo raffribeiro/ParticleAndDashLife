@@ -1,3 +1,4 @@
+import {canvasSize} from './canvas-size.js?v=1.24.0';
 import {FarParticles} from './far-particles.js?v=1.24.0';
 import {splitDrawLayers} from './draw-order.js?v=1.24.0';
 import {EventEffects} from './effects.js?v=1.24.0';
@@ -60,11 +61,12 @@ export class Renderer {
   for(const [name,size,offset] of this.attributes){const a=gl.getAttribLocation(this.program,name);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,size,gl.FLOAT,false,this.instancing?32:40,offset);if(this.instancing)this.instancing.vertexAttribDivisorANGLE(a,1);}
   if(this.instancing){gl.bindBuffer(gl.ARRAY_BUFFER,this.quadBuffer);const a=gl.getAttribLocation(this.program,'corner');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);this.instancing.vertexAttribDivisorANGLE(a,0);}
   gl.uniform2f(this.uniforms.world,s.width,s.height);gl.uniform1f(this.uniforms.glow,this.glow*2);
-  gl.uniform1f(this.uniforms.prediction,predict);gl.uniform1f(this.uniforms.time,performance.now()/1000);gl.uniform2f(this.uniforms.viewport,innerWidth,innerHeight);gl.uniform1f(this.uniforms.layer,layer);
+  gl.uniform1f(this.uniforms.prediction,predict);gl.uniform1f(this.uniforms.time,performance.now()/1000);gl.uniform2f(this.uniforms.viewport,this.cssWidth||s.width,this.cssHeight||s.height);gl.uniform1f(this.uniforms.layer,layer);
   if(this.instancing)this.instancing.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,s.count);else gl.drawArrays(gl.TRIANGLES,0,s.count*6);
  }
  draw(s,predict=0){
-  const gl=this.gl,dpr=Math.min(devicePixelRatio,1.25)*this.scale,w=Math.max(1,Math.round(innerWidth*dpr)),h=Math.max(1,Math.round(innerHeight*dpr));
+  const gl=this.gl,css=canvasSize(this.canvas,s),dpr=Math.min(devicePixelRatio,1.25)*this.scale,w=Math.max(1,Math.round(css.width*dpr)),h=Math.max(1,Math.round(css.height*dpr));
+  this.cssWidth=css.width;this.cssHeight=css.height;
   if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
   const bloom=this.bloom.begin(w,h);if(!bloom&&typeof gl.bindFramebuffer==='function'){gl.bindFramebuffer(gl.FRAMEBUFFER,null);}gl.viewport(0,0,w,h);
   if(this.lastX!==s.x||this.lastWidth!==s.width||this.lastHeight!==s.height){

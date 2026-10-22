@@ -1,3 +1,4 @@
+import {canvasSize} from './canvas-size.js?v=1.24.0';
 import {FrameClock} from './timing.js?v=1.24.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
 let lowFps=0,lowUntil=0;export const VERSION='1.24.0';
@@ -5,7 +6,7 @@ let lowFps=0,lowUntil=0;export const VERSION='1.24.0';
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
 import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.24.0';import {makePalette,PALETTES,randomTriple,lerpPalette} from './color.js?v=1.24.0';import {Renderer} from './renderer.js?v=1.24.0';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
-const s=new Simulation(300,innerWidth,innerHeight);s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
+const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
 let mobilityMin=1,mobilityMax=1;let matrixRevision=0,lastBehaviorPaint=0;const behaviorConfig={enabled:false,interval:30};
 const creatureConfig={enabled:true,count:30,wake:true,mood:true,moodPeriod:45};let creatureStats=null,wiggle=2;
@@ -88,7 +89,8 @@ function point(e){const rect=canvas.getBoundingClientRect();pointer={x:(e.client
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();paused=true;updatePause();$('notice').textContent='A GPU interrompeu a renderização. Recarregue para continuar.';$('notice').style.display='block';});
 document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;sample=performance.now();frames=0;needsRender=true;clock.reset();sync();});
 for(const event of ['click','input','change','keydown'])document.addEventListener(event,()=>{needsRender=true;sync();});
-window.addEventListener('resize',()=>{const w=innerWidth,h=innerHeight;for(let i=0;i<s.count;i++){s.x[i]=s.x[i]/s.width*w;s.y[i]=s.y[i]/s.height*h;if(s.x[i]>=w)s.x[i]=0;if(s.y[i]>=h)s.y[i]=0;}s.width=w;s.height=h;needsRender=true;sync();});
+function resizeCanvas(){const {width:w,height:h}=canvasSize(canvas);if(w===s.width&&h===s.height)return;for(let i=0;i<s.count;i++){s.x[i]=s.x[i]/s.width*w;s.y[i]=s.y[i]/s.height*h;if(s.x[i]>=w)s.x[i]=0;if(s.y[i]>=h)s.y[i]=0;}s.width=w;s.height=h;pointer=null;needsRender=true;sync();}
+const canvasObserver=new ResizeObserver(resizeCanvas);canvasObserver.observe(canvas);window.addEventListener('resize',resizeCanvas);
 function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(now))return;stepPalette(now);if(!paused||needsRender){renderer.draw(s,paused?0:Math.min(1.5,(now-snapshotAt)/(1000/60)));needsRender=false;}frames++;if(!sample)sample=now;if(now-sample>=1000){const fps=frames*1000/(now-sample);$('fps').textContent=Math.round(fps);
    // fps watch: below 60 (57.5 to ignore 1-frame jitter) the counter and the corner tag turn red; drops are logged to the local server.
    {const low=!paused&&!document.hidden&&fps<57.5,tag=$('version');$('fps').classList.toggle('fps-low',low);
