@@ -20,3 +20,8 @@ main{justify-content:flex-end}
 /* The experience opens with no interface; F reveals controls. Touch can use the restore button. */
 body.wallpaper #version{display:none}
 @media(hover:hover) and (pointer:fine){body.wallpaper #restore{display:none}}
+
+/* Keep the touch escape hatch visible even when the screensaver goes idle. */
+#restore{z-index:100;bottom:calc(20px + env(safe-area-inset-bottom,0px));min-height:44px;white-space:nowrap}
+@media(any-pointer:coarse),(max-width:760px){body.wallpaper #restore,body.wallpaper.idle #restore{display:block;opacity:.85!important;pointer-events:auto}}
+body.touch-ui.wallpaper #restore,body.touch-ui.wallpaper.idle #restore{display:block;opacity:.85!important;pointer-events:auto}

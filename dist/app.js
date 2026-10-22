@@ -1,3 +1,4 @@
+import {DoubleTap} from './tap-gesture.js?v=1.24.0';
 import {canvasSize} from './canvas-size.js?v=1.24.0';
 import {FrameClock} from './timing.js?v=1.24.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
@@ -81,7 +82,12 @@ $('disturbance-strength').oninput=e=>{disturbance.strength=+e.target.value/100;$
 $('disturb-now').onclick=()=>worker.postMessage({kind:'disturb'});
 function wallpaper(){document.body.classList.remove('idle');document.body.classList.toggle('wallpaper');}$('wallpaper').onclick=wallpaper;$('restore').onclick=wallpaper;
 document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();wallpaper();return;}if(/INPUT|BUTTON|SUMMARY/.test(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();togglePause();}if(e.key.toLowerCase()==='h')wallpaper();});
-function fullscreen(){if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.().catch(()=>{});}canvas.ondblclick=fullscreen;
+function fullscreen(){if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.().catch(()=>{});}let lastTouch=0;canvas.ondblclick=e=>{if(performance.now()-lastTouch>700){e.preventDefault();fullscreen();}};
+const doubleTap=new DoubleTap();
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;document.body.classList.add('touch-ui');lastTouch=performance.now();doubleTap.down(e.pointerId,e.clientX,e.clientY,lastTouch);});
+canvas.addEventListener('pointermove',e=>{if(e.pointerType==='touch')doubleTap.move(e.pointerId,e.clientX,e.clientY);});
+canvas.addEventListener('pointerup',e=>{if(e.pointerType!=='touch')return;lastTouch=performance.now();if(doubleTap.up(e.pointerId,e.clientX,e.clientY,lastTouch)){e.preventDefault();fullscreen();}});
+canvas.addEventListener('pointercancel',e=>doubleTap.cancel(e.pointerId));
 // Screensaver: hide UI and cursor after 30 s without input; any input restores.
 function wake(){document.body.classList.remove('idle');clearTimeout(idleTimer);if($('screensaver').checked)idleTimer=setTimeout(()=>document.body.classList.add('idle'),30000);}
 for(const ev of ['pointermove','pointerdown','keydown','wheel','touchstart'])addEventListener(ev,wake,{passive:true});$('screensaver').onchange=wake;wake();

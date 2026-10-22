@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {DoubleTap} from '../dist/tap-gesture.js';
+const tap=(g,id,x,y,t)=>{g.down(id,x,y,t);return g.up(id,x,y,t+50);};
+test('two quick nearby taps fire once, isolated or distant taps do not',()=>{const g=new DoubleTap();assert.equal(tap(g,1,50,50,0),false);assert.equal(tap(g,2,55,52,200),true);assert.equal(tap(g,3,55,52,400),false);assert.equal(tap(g,4,200,200,600),false);assert.equal(tap(g,5,200,200,1200),false);});
+test('dragging, holding and multiple fingers cannot toggle fullscreen',()=>{const g=new DoubleTap();tap(g,1,0,0,0);g.down(2,0,0,100);g.move(2,40,0);assert.equal(g.up(2,0,0,200),false);g.down(3,0,0,300);assert.equal(g.up(3,0,0,900),false);g.down(4,0,0,1000);g.down(5,0,0,1010);assert.equal(g.up(4,0,0,1050),false);assert.equal(g.up(5,0,0,1060),false);});
