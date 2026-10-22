@@ -37,10 +37,10 @@
   "palette": {
     "preset": "generated",
     "triple": {
-      "name": "Gerada",
-      "d": 31.840715396490765,
-      "s": 157.5985033256925,
-      "a": 276.2342020141824
+      "name": "Roxo e amarelo",
+      "d": 300,
+      "s": 320,
+      "a": 100
     },
     "rotate": 0,
     "auto": true,

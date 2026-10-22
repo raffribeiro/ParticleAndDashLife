@@ -7,13 +7,13 @@ import {FrameClock} from './timing.js?v=1.24.0';
 let lowFps=0,lowUntil=0;export const VERSION='1.24.0';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.24.0';import {makePalette,PALETTES,randomTriple,lerpPalette} from './color.js?v=1.24.0';import {Renderer} from './renderer.js?v=1.24.0';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.24.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.24.0';import {Renderer} from './renderer.js?v=1.24.0';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
 let mobilityMin=1,mobilityMax=1;let matrixRevision=0,lastBehaviorPaint=0;const behaviorConfig={enabled:false,interval:30};
 const creatureConfig={enabled:true,count:30,wake:true,mood:true,moodPeriod:45};let creatureStats=null,wiggle=2;
-const paletteState={rotate:0,preset:'abyss',triple:null,auto:true,interval:45};let livePalette=null,paletteFrom=null,paletteTo=null,paletteT0=0,nextPaletteAt=0,lastPaletteTick=0;const PALETTE_FADE=6000;let renderScale=1,slowWindows=0,fastWindows=0,idleTimer=null;
+const paletteState={rotate:0,preset:'generated',triple:{...OPENING_PALETTE},auto:true,interval:45};let livePalette=null,paletteFrom=null,paletteTo=null,paletteT0=0,nextPaletteAt=0,lastPaletteTick=0;const PALETTE_FADE=6000;let renderScale=1,slowWindows=0,fastWindows=0,idleTimer=null;
 // 60 fps render, matched to the 60 Hz physics in the worker.
 const clock=new FrameClock(60);let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});

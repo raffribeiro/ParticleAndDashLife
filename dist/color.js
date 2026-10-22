@@ -80,4 +80,5 @@ export function lerpPalette(p,q,t){
  const species=p.species.map((a,i)=>{const b=q.species[i];return {...b,rgb:mixOklab(a.rgb,b.rgb,t),rim:mixOklab(a.rim,b.rim,t),deep:mixOklab(a.deep,b.deep,t),accent:mixOklab(a.accent,b.accent,t)};});
  return {...q,species,colors:species.map(s=>toHex(s.rgb)),rgb:species.map(s=>s.rgb),background:mixOklab(p.background,q.background,t),backdrop:p.backdrop.map((c,i)=>mixOklab(c,q.backdrop[i],t)),panel:mixOklab(p.panel,q.panel,t)};
 }
-export const DEFAULT_PALETTE=makePalette();
+export const OPENING_PALETTE={name:'Roxo e amarelo',d:300,s:320,a:100};
+export const DEFAULT_PALETTE=makePalette(OPENING_PALETTE);
