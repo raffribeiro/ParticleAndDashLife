@@ -124,7 +124,8 @@ export class Creatures {
   }
   if(c.release){
    const r=c.release;r.age++;r.vx??=Math.cos(c.heading)*.8;r.vy??=Math.sin(c.heading)*.8;
-   stepSoftStrand(c,[c.x[0]+r.vx,c.y[0]+r.vy],[r.vx,r.vy],r.age,sim.width,sim.height);
+   const ease=Math.min(1,r.age/12);
+   stepSoftStrand(c,[c.x[0]+r.vx*ease,c.y[0]+r.vy*ease],[r.vx*ease,r.vy*ease],r.age,sim.width,sim.height);
    c.heading=Math.atan2(r.vy,r.vx);c.age++;c.energy=Math.max(.25,c.energy-.0003);c.hunting=false;
    // Released parts drift in place first; no school, memory or body target can pull them back.
    for(const item of c.stomach)item.timer--;

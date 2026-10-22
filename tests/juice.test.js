@@ -24,5 +24,5 @@ test('released fish ease back into swimming without a first-frame jump',()=>{
  const sim=new Simulation(10,800,600,()=>.5),cs=new Creatures(2),c=createFish('rect',seededRandom(3),200,200,0,0,1);
  cs.wake=false;cs.removed=new Set();cs.added=[];c.release={age:0};const x=c.x[0],y=c.y[0];
  cs.update(c,sim,null);assert.ok(Math.hypot(c.x[0]-x,c.y[0]-y)<.1);
- for(let k=0;k<35;k++)cs.update(c,sim,null);assert.equal(c.release,null);assert.ok([...c.x,...c.y].every(Number.isFinite));
+ for(let k=0;k<65;k++)cs.update(c,sim,null);assert.equal(c.release,null);assert.ok([...c.x,...c.y].every(Number.isFinite));
 });
