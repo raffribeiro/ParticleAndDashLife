@@ -375,11 +375,13 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
    const rx=px+(hx*mx-hy*my)/dl*reach,ry=py+(hy*mx+hx*my)/dl*reach;
    if(!l.init){l.fx=rx;l.fy=ry;l.t=1;l.init=true;l.plantedAt=this.tick;}
    if(active.includes(l)&&l.t<1){
+    // Re-aim during the swing: a fast body must not outrun a stale world-space landing target.
+    if(w.materialParts&&w.body){const b=w.body,predict=Math.max(2,(1-l.t)*(l.duration||12));let dx=rx+b.vx*predict-px,dy=ry+b.vy*predict-py;const d=Math.hypot(dx,dy)||1,limit=(l.upper+l.lower)*.9;if(d>limit){dx*=limit/d;dy*=limit/d;}l.to=[px+dx,py+dy];}
     l.t=Math.min(1,l.t+dt/(l.duration||12));const e=l.t*l.t*l.t*(l.t*(l.t*6-15)+10);
     l.fx=l.from[0]+(l.to[0]-l.from[0])*e;l.fy=l.from[1]+(l.to[1]-l.from[1])*e;striding++;
     if(l.t===1)l.plantedAt=this.tick;
    }
-   if(active.includes(l)&&l.t===1&&!busy&&this.tick-(l.plantedAt||0)>5){
+   if(active.includes(l)&&l.t===1&&!busy&&this.tick-(l.plantedAt||0)>(w.materialParts&&active.length<=2?2:5)){
     const dist=Math.hypot(wrappedDelta(l.fx-rx,W),wrappedDelta(l.fy-ry,H)),extension=Math.hypot(wrappedDelta(l.fx-px,W),wrappedDelta(l.fy-py,H))/(l.upper+l.lower);
     const score=Math.max(dist/l.stride,extension/.84);
     if((dist>l.stride||extension>.84)&&score>urgency){urgency=score;candidate={l,px,py,rx,ry};}
@@ -389,7 +391,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   }
   if(candidate&&(!behavior?.resting||w.legs.some(l=>l.t===1&&Math.hypot(wrappedDelta(l.fx-cx,W),wrappedDelta(l.fy-cy,H))>bodyLength))){
    const {l,px,py,rx,ry}=candidate,b=w.body,speed=Math.hypot(b.vx,b.vy);
-   l.duration=clamp(l.stride/Math.max(.3,speed)*.65,7,16)/Math.max(.6,w.locomotion);
+   l.duration=clamp(l.stride/Math.max(.3,speed)*.65,w.materialParts&&active.length<=2?4:7,16)/Math.max(.6,w.locomotion);
    const prediction=Math.min(l.duration*.65,12);let dx=rx+b.vx*prediction-px,dy=ry+b.vy*prediction-py;
    const d=Math.hypot(dx,dy)||1,limit=(l.upper+l.lower)*.85;if(d>limit){dx*=limit/d;dy*=limit/d;}
    l.from=[px+wrappedDelta(l.fx-px,W),py+wrappedDelta(l.fy-py,H)];l.to=[px+dx,py+dy];l.t=0;
@@ -413,6 +415,12 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   {const cruise=.9*(w.pace??1)*sizePace(w.members.length)*Math.max(.35,activity)*planCruise(w),sp=Math.hypot(vx,vy);if(sp<cruise){const hx=sp>.05?vx/sp:Math.cos(w.heading),hy=sp>.05?vy/sp:Math.sin(w.heading),add=(cruise-sp)*.05*dt;for(const i of w.members){sim.vx[i]+=hx*add;sim.vy[i]+=hy*add;}}}
   const hasTail=(this.fish||[]).some(c=>c.attachment?.walker===w.id&&c.attachment.role==='tail');
   for(const i of w.members){if(w.growth)sim.energy[i]=Math.max(.2,sim.energy[i]-.00015*w.growth*dt);sim.vx[i]+=hx*thrust;sim.vy[i]+=hy*thrust;if(hasTail){const lateral=-hy*sim.vx[i]+hx*sim.vy[i];sim.vx[i]+=hy*lateral*.008*dt;sim.vy[i]-=hx*lateral*.008*dt;}}
+  const walking=active.filter(l=>!l.tentacle);
+  if(w.materialParts&&walking.length){
+   let mx=0,my=0;for(const i of w.members){mx+=sim.vx[i];my+=sim.vy[i];}mx/=w.members.length;my/=w.members.length;
+   const capacity=walking.length===1?.85:walking.length===2?1.2:1.8,sp=Math.hypot(mx,my),loss=Math.max(0,1-capacity/(sp||1));
+   for(const i of w.members){sim.vx[i]-=mx*loss;sim.vy[i]-=my*loss;}
+  }
  }
  serialize(sim){
   return this.list.map(w=>{const legs=new Float32Array(w.legs.length*7);w.legs.forEach((l,k)=>{const [px,py]=this.hipPosition(w,l,sim),W=sim.width,H=sim.height;

@@ -29,7 +29,7 @@ export class Bloom {
     float m=max(c.r,max(c.g,c.b)),t=.72;if(m>t){float n=t+(1.-t)*(1.-exp(-(m-t)/(1.-t)));c*=n/m;}
     vec2 q=uv-.5;c*=mix(1.,.78,smoothstep(.25,.75,dot(q,q)*2.2));c=max(c,tint*.0);
     // Film grain: per-frame noise, slightly stronger in midtones.
-    float l=dot(c,vec3(.299,.587,.114));float g=(hash(gl_FragCoord.xy*.73+seed*91.7)+hash(gl_FragCoord.xy*1.37-seed*53.1)-1.)*grain*(.55+.9*l*(1.-l)*2.);
+    float l=dot(c,vec3(.299,.587,.114));float g=(hash(gl_FragCoord.xy*.73+seed*91.7)+hash(gl_FragCoord.xy*1.37-seed*53.1)-1.)*grain*1.8*(.55+.9*l*(1.-l)*2.);
     c+=g+(hash(gl_FragCoord.xy)-.5)/255.;gl_FragColor=vec4(c,1.);}`);
   this.ok=true;
  }

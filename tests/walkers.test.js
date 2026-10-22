@@ -138,3 +138,9 @@ test('leg strain recovers and a long forward reach does not count as lagging beh
  l.fx=x-base*1.6;l.fy=y;for(let t=0;t<8;t++)w.poseParts(a,s,pool,1);
  l.fx=x+base*1.6;for(let t=0;t<40;t++)w.poseParts(a,s,pool,1);assert.ok(c.attachment);assert.equal(c.attachment.strain,0);
 });
+test('a fast body cannot outrun its one or two assembled walking legs',()=>{
+ for(const count of [1,2]){const s=cluster(),w=new Walkers(()=>.5),pool=fishParts(count),a=w.create(s,[0,1,2,3,4]);a.plan='lizard';a.parts=['lizard','lizard'];a.legs=a.legs.slice(0,count);for(const l of a.legs)l.tentacle=false;
+ for(let t=0;t<60;t++)w.step(s,1,pool);s.vx.fill(5);s.vy.fill(0);w.step(s,1,pool);
+ const vx=a.members.reduce((n,i)=>n+s.vx[i],0)/a.members.length,vy=a.members.reduce((n,i)=>n+s.vy[i],0)/a.members.length;
+ assert.ok(Math.hypot(vx,vy)<=(count===1?.85:1.2)+1e-5);}
+});
