@@ -8,4 +8,4 @@ test('all palettes are triads: dominant, secondary and accent 120° apart',()=>{
 
 test('subtle chroma variation stays stable across palette rebuilds',async()=>{const {CHROMA_VARIATION}=await import('../dist/color.js');assert.ok(CHROMA_VARIATION.every(v=>v>=.94&&v<=1.06));assert.ok(new Set(CHROMA_VARIATION).size>1);assert.deepEqual(makePalette('reef').colors,makePalette('reef').colors);});
 
-test('opening palette uses purple bodies and yellow accents',async()=>{const {DEFAULT_PALETTE}=await import('../dist/color.js');const hues=DEFAULT_PALETTE.rgb.map(rgb=>srgbToOklch(rgb)[2]);assert.ok(hues.slice(0,4).every(h=>h>=280&&h<=340));assert.ok(hues.slice(4).every(h=>h>=80&&h<=120));});
+test('opening palette uses predominant yellows and oranges with purple accents',async()=>{const {DEFAULT_PALETTE}=await import('../dist/color.js');const hues=DEFAULT_PALETTE.rgb.map(rgb=>srgbToOklch(rgb)[2]);assert.ok(hues.slice(0,4).every(h=>h>=25&&h<=100));assert.ok(hues.slice(4).every(h=>h>=270&&h<=320));});
