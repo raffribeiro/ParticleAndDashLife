@@ -1,15 +1,15 @@
-import {openingColors} from './opening-colors.js?v=1.25.3';
-import {canvasSize} from './canvas-size.js?v=1.25.3';
-import {FarParticles} from './far-particles.js?v=1.25.3';
-import {splitDrawLayers} from './draw-order.js?v=1.25.3';
-import {EventEffects} from './effects.js?v=1.25.3';
-import {TrailHistory} from './trail-history.js?v=1.25.3';
-import {CurvedTrails} from './curved-trails.js?v=1.25.3';
-import {COLORS} from './simulation.js?v=1.25.3';
-import {Bloom} from './bloom.js?v=1.25.3';
-import {Backdrop} from './backdrop.js?v=1.25.3';
-import {CreatureMesh} from './creature-mesh.js?v=1.25.3';
-import {DEFAULT_PALETTE} from './color.js?v=1.25.3';
+import {openingColors} from './opening-colors.js?v=1.25.4';
+import {canvasSize} from './canvas-size.js?v=1.25.4';
+import {FarParticles} from './far-particles.js?v=1.25.4';
+import {splitDrawLayers} from './draw-order.js?v=1.25.4';
+import {EventEffects} from './effects.js?v=1.25.4';
+import {TrailHistory} from './trail-history.js?v=1.25.4';
+import {CurvedTrails} from './curved-trails.js?v=1.25.4';
+import {COLORS} from './simulation.js?v=1.25.4';
+import {Bloom} from './bloom.js?v=1.25.4';
+import {Backdrop} from './backdrop.js?v=1.25.4';
+import {CreatureMesh} from './creature-mesh.js?v=1.25.4';
+import {DEFAULT_PALETTE} from './color.js?v=1.25.4';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {
@@ -21,10 +21,10 @@ export class Renderer {
   const p=this.program=gl.createProgram();
   gl.attachShader(p,shader(gl.VERTEX_SHADER,`
    attribute vec2 corner;attribute vec2 pos;attribute vec2 velocity;attribute vec3 color;attribute float energy;
-   uniform float prediction;uniform vec2 viewport;uniform vec2 world;uniform float layer;
+   uniform float openingScale;uniform float prediction;uniform vec2 viewport;uniform vec2 world;uniform float layer;
    varying vec3 tint;varying float e;varying vec2 local;varying float headSize;varying float stg;varying float prog;varying float seed;varying float pulse;varying float minor;
    void main(){float q=floor(energy/4.+.0001);float en=energy-q*4.;pulse=fract(en*2.+.001)/.98;en=floor(en*2.+.001)/2.;float k=floor(q/201.+.0001);float fx=q-k*201.;minor=k;stg=floor(fx/50.+.0001);prog=(fx-stg*50.)/49.;seed=fract(sin(dot(pos,vec2(12.9898,78.233)))*43758.5453);// Uniform size for every circle (stage only animates: pop, ripple, breath, hollowing).
-   headSize=24.*1.6;local=corner*headSize*.3;vec2 head=mod(pos+velocity*prediction,world)/world*vec2(2.,-2.)+vec2(-1.,1.);gl_Position=vec4(head+local/viewport*vec2(2.,-2.),0.,1.);
+   headSize=24.*1.6*openingScale;local=corner*headSize*.3;vec2 head=mod(pos+velocity*prediction,world)/world*vec2(2.,-2.)+vec2(-1.,1.);gl_Position=vec4(head+local/viewport*vec2(2.,-2.),0.,1.);
    // Two passes: hit/pulsing particles (pulse > 0.04) are drawn in the top pass, above bodies and limbs.
    if((pulse>.04?1.:0.)!=layer)gl_Position=vec4(2.,2.,2.,1.);tint=color;e=en;}`));
   gl.attachShader(p,shader(gl.FRAGMENT_SHADER,`
@@ -54,7 +54,7 @@ export class Renderer {
   this.palette=COLORS.map(c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)/255));
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   this.glow=.65;this.trail=.65;this.scale=1;this.showBonds=false;this.bloom=new Bloom(gl,this.instancing);this.backdrop=new Backdrop(gl,this.instancing);this.farParticles=new FarParticles(gl,this.instancing);this.creatures=new CreatureMesh(gl,this.instancing);this.underMesh=new CreatureMesh(gl,this.instancing);this.eventMesh=new CreatureMesh(gl,this.instancing);this.blobMesh=new CreatureMesh(gl,this.instancing);this.effects=new EventEffects();this.setPalette(DEFAULT_PALETTE);this.history=new TrailHistory();this.curves=new CurvedTrails(gl,this.instancing,this.palette);
-  this.uniforms=Object.fromEntries(['world','glow','emission','prediction','viewport','time','layer'].map(name=>[name,gl.getUniformLocation(p,name)]));
+  this.uniforms=Object.fromEntries(['world','glow','emission','openingScale','prediction','viewport','time','layer'].map(name=>[name,gl.getUniformLocation(p,name)]));
  }
  // Palette arrays are mutated in place so CurvedTrails keeps its reference.
  setPalette(p){this.paletteInfo=p;p.rgb.forEach((c,i)=>{if(this.palette[i])this.palette[i].splice(0,3,...c);});this.background=p.background;if(p.backdrop)this.backdrop.colors=p.backdrop;this.creatures.palette=p;this.underMesh.palette=p;this.eventMesh.palette=p;if(this.blobMesh)this.blobMesh.palette=p;this.lastX=null;}
@@ -62,7 +62,7 @@ export class Renderer {
   gl.useProgram(this.program);gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
   for(const [name,size,offset] of this.attributes){const a=gl.getAttribLocation(this.program,name);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,size,gl.FLOAT,false,this.instancing?32:40,offset);if(this.instancing)this.instancing.vertexAttribDivisorANGLE(a,1);}
   if(this.instancing){gl.bindBuffer(gl.ARRAY_BUFFER,this.quadBuffer);const a=gl.getAttribLocation(this.program,'corner');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);this.instancing.vertexAttribDivisorANGLE(a,0);}
-  gl.uniform2f(this.uniforms.world,s.width,s.height);gl.uniform1f(this.uniforms.glow,this.glow*2);gl.uniform1f(this.uniforms.emission,s.openingGlow||0);
+  gl.uniform2f(this.uniforms.world,s.width,s.height);gl.uniform1f(this.uniforms.glow,this.glow*2);gl.uniform1f(this.uniforms.emission,s.openingGlow||0);gl.uniform1f(this.uniforms.openingScale,s.openingScale??1);
   gl.uniform1f(this.uniforms.prediction,predict);gl.uniform1f(this.uniforms.time,performance.now()/1000);gl.uniform2f(this.uniforms.viewport,this.cssWidth||s.width,this.cssHeight||s.height);gl.uniform1f(this.uniforms.layer,layer);
   if(this.instancing)this.instancing.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,s.count);else gl.drawArrays(gl.TRIANGLES,0,s.count*6);
  }

@@ -1,4 +1,4 @@
-import {DEFAULT_PALETTE} from './color.js?v=1.25.3';
+import {DEFAULT_PALETTE} from './color.js?v=1.25.4';
 // 60-30-10: species 0–1 30% each, 2–3 15% each, 4–5 5% each (deterministic interleave).
 export const SPECIES_PATTERN=[0,1,2,3,4,5,0,1,0,1,2,3,0,1,0,1,2,3,0,1];
 // Species colours come from a harmonic OKLCH palette; mutated in place when the palette changes.
