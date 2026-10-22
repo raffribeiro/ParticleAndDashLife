@@ -1,3 +1,4 @@
+import {BigBang} from './big-bang.js?v=1.24.0';
 import {mergeChanged} from './pending-changes.js?v=1.24.0';
 import {DoubleTap} from './tap-gesture.js?v=1.24.0';
 import {canvasSize} from './canvas-size.js?v=1.24.0';
@@ -8,7 +9,7 @@ let lowFps=0,lowUntil=0;export const VERSION='1.24.0';
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
 import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.24.0';import {makePalette,PALETTES,randomTriple,lerpPalette} from './color.js?v=1.24.0';import {Renderer} from './renderer.js?v=1.24.0';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
-const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
+const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
 let mobilityMin=1,mobilityMax=1;let matrixRevision=0,lastBehaviorPaint=0;const behaviorConfig={enabled:false,interval:30};
 const creatureConfig={enabled:true,count:30,wake:true,mood:true,moodPeriod:45};let creatureStats=null,wiggle=2;
@@ -28,7 +29,7 @@ worker.onmessage=({data:m})=>{if(m.revision!==revision)return;for(const key of [
 }mobilityMin=m.mobilityMin;mobilityMax=m.mobilityMax;disturbanceCount=m.disturbanceCount;nextDisturbance=m.nextDisturbance;if(m.disturbanceEvent){const event=m.disturbanceEvent;if(event.kind==='affinities'){$('last-disturbance').textContent='✧ As afinidades estão mudando';s.matrix=event.matrix;matrix();if(!behaviorConfig.enabled){document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));current='custom';$('preset-description').textContent='As afinidades mudaram suavemente. Um novo equilíbrio está surgindo.';}}else{$('last-disturbance').textContent='◌ Onda de impulso atravessando a colônia';}}needsRender=true;};
 worker.onerror=()=>{$('notice').textContent='A simulação foi interrompida. Recarregue a página para reiniciar.';$('notice').style.display='block';};
 worker.postMessage({kind:'init',count:s.count,width:s.width,height:s.height});
-const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);revision++;s.historyRevision=revision;worker.postMessage({kind:'reset',revision,count:s.count});needsRender=true;};
+const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);new BigBang(s);s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;s.historyRevision=revision;worker.postMessage({kind:'reset',revision,count:s.count});needsRender=true;};
 function legend(){if(!$('legend'))return;$('legend').replaceChildren();for(const c of COLORS){const dot=document.createElement('i');dot.style.color=dot.style.background=c;$('legend').append(dot);}}
 function paletteSource(){return paletteState.preset==='generated'?paletteState.triple:paletteState.preset;}
 function commitPalette(p){livePalette=p;COLORS.splice(0,COLORS.length,...p.colors);renderer.setPalette(p);const root=document.documentElement.style,hex=c=>'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');root.setProperty('--mint',p.colors[4]);root.setProperty('--bg',hex(p.background));root.setProperty('--panel',hex(p.panel));document.querySelector('meta[name=theme-color]').content='#'+p.background.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
