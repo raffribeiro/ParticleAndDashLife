@@ -11,3 +11,5 @@ test('fallback trails allocate enough memory for all 24 samples and reuse it',as
  assert.equal(h.valid,24);assert.equal(drawn,5*24*2);assert.equal(uploaded,drawn*8);assert.ok(trails.fallbackData.length>=uploaded);
  const data=trails.fallbackData,before=allocations;h.update(s,2500);trails.draw(s,h,0,1,{});assert.equal(trails.fallbackData,data);assert.equal(allocations,before);
 });
+
+test('opening emissive boosts bloom for the frame without changing the user setting',()=>{globalThis.devicePixelRatio=1;const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(_,n)=>n},{get:(o,k)=>k in o?o[k]:(()=>({}))}),r=new Renderer({width:0,height:0,getContext:()=>gl}),s=new Simulation(5,400,300);r.bloom.intensity=1.6;let peak=0;r.bloom.begin=()=>{peak=r.bloom.intensity;return false;};s.openingGlow=1;r.draw(s);assert.equal(peak,6.4);assert.equal(r.bloom.intensity,1.6);s.openingGlow=0;r.draw(s);assert.equal(peak,1.6);});

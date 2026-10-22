@@ -1,13 +1,13 @@
-import {BigBang} from './big-bang.js?v=1.25.0';
-import {mergeChanged} from './pending-changes.js?v=1.25.0';
-import {DoubleTap} from './tap-gesture.js?v=1.25.0';
-import {canvasSize} from './canvas-size.js?v=1.25.0';
-import {FrameClock} from './timing.js?v=1.25.0';
+import {BigBang} from './big-bang.js?v=1.25.1';
+import {mergeChanged} from './pending-changes.js?v=1.25.1';
+import {DoubleTap} from './tap-gesture.js?v=1.25.1';
+import {canvasSize} from './canvas-size.js?v=1.25.1';
+import {FrameClock} from './timing.js?v=1.25.1';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.25.0';
+let lowFps=0,lowUntil=0;export const VERSION='1.25.1';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.25.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.25.0';import {Renderer} from './renderer.js?v=1.25.0';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.25.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.25.1';import {Renderer} from './renderer.js?v=1.25.1';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
@@ -18,7 +18,7 @@ const paletteState={rotate:0,preset:'generated',triple:{...OPENING_PALETTE},auto
 const clock=new FrameClock(60);let settingsReady=false,openingRevision=null;let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});
 function sync(){worker.postMessage({kind:'config',matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:s.width,height:s.height});}
-worker.onmessage=({data:m})=>{if(m.revision!==revision)return;if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
+worker.onmessage=({data:m})=>{if(m.revision!==revision)return;if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.openingGlow=m.openingGlow||0;s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
  s.matrix=m.behavior.matrix;
  if(behaviorConfig.enabled){const changed=current!==m.behavior.key;current=m.behavior.key;
   document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset==='random'));

@@ -1,16 +1,22 @@
 export class BigBang{
- constructor(sim){this.tick=0;this.hold=54;this.duration=180;this.launched=false;
-  const radius=Math.max(1,Math.min(16,Math.min(sim.width,sim.height)*.025));
-  for(let i=0;i<sim.count;i++){const angle=i*2.3999632297,r=radius*Math.sqrt(sim.rng());sim.x[i]=sim.width*.5+Math.cos(angle)*r;sim.y[i]=sim.height*.5+Math.sin(angle)*r;sim.vx[i]=sim.vy[i]=0;}
+ constructor(sim){this.tick=0;this.hold=30;this.duration=96;this.launched=false;
+  const radius=Math.max(1,Math.min(28,Math.min(sim.width,sim.height)*.045));
+  this.originX=new Float32Array(sim.count);this.originY=new Float32Array(sim.count);
+  for(let i=0;i<sim.count;i++){const angle=i*2.3999632297,r=radius*Math.sqrt(sim.rng());this.originX[i]=Math.cos(angle)*r/sim.width;this.originY[i]=Math.sin(angle)*r/sim.height;sim.x[i]=sim.width*.5+this.originX[i]*sim.width;sim.y[i]=sim.height*.5+this.originY[i]*sim.height;sim.vx[i]=sim.vy[i]=0;}
   sim.gridReady=false;
  }
+ get emission(){if(this.tick>=this.duration)return 0;if(this.tick<=this.hold)return .45*Math.pow(this.tick/this.hold,3);return Math.exp(-(this.tick-this.hold-1)/12);}
  step(sim,dt=1){
   if(this.tick>=this.duration)return false;this.tick+=dt;
-  if(this.tick<=this.hold)return true;
-  if(!this.launched){this.launched=true;const speed=Math.min(sim.width,sim.height)*.0038;
-   for(let i=0;i<sim.count;i++){const a=i*2.3999632297+(sim.rng()-.5)*.15,v=speed*(.5+sim.rng()*.5);sim.vx[i]=Math.cos(a)*v;sim.vy[i]=Math.sin(a)*v;}
+  if(this.tick<=this.hold){
+   const t=this.tick/this.hold,e=t*t*(3-2*t),squeeze=1-e*.91;
+   for(let i=0;i<sim.count;i++){sim.x[i]=sim.width*(.5+this.originX[i]*squeeze);sim.y[i]=sim.height*(.5+this.originY[i]*squeeze);sim.vx[i]=sim.vy[i]=0;}
+   sim.gridReady=false;return true;
   }
-  for(let i=0;i<sim.count;i++){sim.x[i]=((sim.x[i]+sim.vx[i]*dt)%sim.width+sim.width)%sim.width;sim.y[i]=((sim.y[i]+sim.vy[i]*dt)%sim.height+sim.height)%sim.height;sim.vx[i]*=Math.exp(-.006*dt);sim.vy[i]*=Math.exp(-.006*dt);}
+  if(!this.launched){this.launched=true;const speed=Math.min(sim.width,sim.height)*.0095;
+   for(let i=0;i<sim.count;i++){const a=i*2.3999632297+(sim.rng()-.5)*.18,band=i%10,r=sim.rng(),v=speed*(band<2?.18+r*.3:band<8?.55+r*.65:1.45+r*.85);sim.vx[i]=Math.cos(a)*v;sim.vy[i]=Math.sin(a)*v;}
+  }
+  for(let i=0;i<sim.count;i++){sim.x[i]=((sim.x[i]+sim.vx[i]*dt)%sim.width+sim.width)%sim.width;sim.y[i]=((sim.y[i]+sim.vy[i]*dt)%sim.height+sim.height)%sim.height;sim.vx[i]*=Math.exp(-.022*dt);sim.vy[i]*=Math.exp(-.022*dt);}
   sim.gridReady=false;return true;
  }
 }
