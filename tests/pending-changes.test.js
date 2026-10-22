@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {mergeChanged} from '../dist/pending-changes.js';
+test('slot invalidations survive newer snapshots without changes',()=>{let pending=mergeChanged(null,[2,5],8);pending=mergeChanged(pending,null,8);pending=mergeChanged(pending,[2,3],6);assert.deepEqual([...pending],[2,5,3]);assert.deepEqual([...mergeChanged(pending,null,4)],[2,3]);assert.equal(mergeChanged(null,null,4),null);});

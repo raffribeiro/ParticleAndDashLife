@@ -1,3 +1,4 @@
+import {mergeChanged} from './pending-changes.js?v=1.24.0';
 import {DoubleTap} from './tap-gesture.js?v=1.24.0';
 import {canvasSize} from './canvas-size.js?v=1.24.0';
 import {FrameClock} from './timing.js?v=1.24.0';
@@ -16,7 +17,7 @@ const paletteState={rotate:0,preset:'abyss',triple:null,auto:true,interval:45};l
 const clock=new FrameClock(60);let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});
 function sync(){worker.postMessage({kind:'config',matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:s.width,height:s.height});}
-worker.onmessage=({data:m})=>{if(m.revision!==revision)return;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=m.changed;s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
+worker.onmessage=({data:m})=>{if(m.revision!==revision)return;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
  s.matrix=m.behavior.matrix;
  if(behaviorConfig.enabled){const changed=current!==m.behavior.key;current=m.behavior.key;
   document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset==='random'));

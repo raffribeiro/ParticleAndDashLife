@@ -83,7 +83,7 @@ export class Renderer {
      this.data[offset+5]=((s.minor?.[i]??0)*201+(s.fx?.[i]??149))*4+Math.floor(Math.min(3.99,s.energy[i])*2)/2+Math.min(1,s.pulse?.[i]||0)*.49;this.data[offset+6]=s.vx[i];this.data[offset+7]=s.vy[i];
     }
    }
-   gl.bufferSubData(gl.ARRAY_BUFFER,0,this.data.subarray(0,s.count*stride));this.history.update(s,performance.now());this.lastX=s.x;this.lastWidth=s.width;this.lastHeight=s.height;
+   gl.bufferSubData(gl.ARRAY_BUFFER,0,this.data.subarray(0,s.count*stride));this.history.update(s,performance.now());s.changed=null;this.lastX=s.x;this.lastWidth=s.width;this.lastHeight=s.height;
   }
   gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);this.backdrop.draw(w,h,performance.now()/1000);
   this.curves.draw(s,this.history,predict,this.trail,this.buffer);

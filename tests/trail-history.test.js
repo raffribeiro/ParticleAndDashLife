@@ -5,3 +5,8 @@ test('wrapped edges keep local continuous coordinates',()=>{const h=new TrailHis
 test('sampling and ring reuse keep fixed memory',()=>{const h=new TrailHistory();h.update(state(1,1),0);const data=h.data;assert.equal(h.update(state(2,2),40),false);for(let i=1;i<50;i++)h.update(state(i%100,1),i*80);assert.equal(h.data,data);assert.equal(h.valid,24);assert.deepEqual(h.point(0,23),[26,1]);});
 test('explicit restart and resize clear old paths',()=>{const h=new TrailHistory();h.update(state(1,1),0);h.update(state(2,2),80);h.update(state(90,90,1),160);assert.equal(h.valid,1);assert.deepEqual(h.point(0,0),[90,90]);const s=state(40,40,1);s.width=200;h.update(s,240);assert.equal(h.valid,1);});
 test('count changes keep existing trails and restart only changed or new rows',async()=>{const {Simulation}=await import('../dist/simulation.js');const s=new Simulation(6,500,500,()=>.5);for(let i=0;i<6;i++){s.x[i]=10*i+5;s.y[i]=7;}const h=new TrailHistory();h.update(s,0);for(let i=0;i<6;i++)s.x[i]+=3;h.update(s,100);const before=h.point(0,1)[0];s.rebuild(new Set([2]),[{x:400,y:400,type:1},{x:410,y:400,type:1}]);s.changed=[...s.changedIndices];h.update(s,120);assert.equal(h.count,7);assert.equal(h.point(0,1)[0],before);assert.equal(h.point(2,1)[0],s.x[2]);assert.equal(h.point(6,1)[0],s.x[6]);});
+test('a replaced slot cannot inherit a trail when intermediate snapshots are skipped',async()=>{
+ const {mergeChanged}=await import('../dist/pending-changes.js');const h=new TrailHistory();h.update(state(10,10),0);h.update(state(15,10),80);
+ const latest=state(80,80);latest.changed=mergeChanged(mergeChanged(null,[0],1),null,1);h.update(latest,100);
+ for(let age=0;age<h.valid;age++)assert.deepEqual(h.point(0,age),[80,80]);
+});

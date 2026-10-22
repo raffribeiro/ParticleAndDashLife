@@ -68,7 +68,8 @@ export class CurvedTrails {
  }
  drawFallback(s,h,predict,amount){
   const gl=this.gl;if(!this.fallbackProgram)this.initFallback();gl.useProgram(this.fallbackProgram);gl.bindBuffer(gl.ARRAY_BUFFER,this.fallbackBuffer);
-  if(!this.fallbackData||this.fallbackData.length!==s.count*12*16){this.fallbackData=new Float32Array(s.count*12*16);gl.bufferData(gl.ARRAY_BUFFER,this.fallbackData.byteLength,gl.DYNAMIC_DRAW);this.fallbackX=null;}
+  const required=s.count*h.size*2*8;
+  if(!this.fallbackData||this.fallbackData.length<required){this.fallbackData=new Float32Array(Math.ceil(required*1.25));gl.bufferData(gl.ARRAY_BUFFER,this.fallbackData.byteLength,gl.DYNAMIC_DRAW);this.fallbackX=null;}
   if(this.fallbackX!==s.x||this.fallbackVersion!==h.version){
    let offset=0;
    for(let i=0;i<s.count;i++){
