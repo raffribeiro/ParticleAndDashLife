@@ -5,6 +5,7 @@ export class BigBang{
   for(let i=0;i<sim.count;i++){const angle=i*2.3999632297,r=radius*Math.sqrt(sim.rng());this.originX[i]=Math.cos(angle)*r/sim.width;this.originY[i]=Math.sin(angle)*r/sim.height;sim.x[i]=sim.width*.5+this.originX[i]*sim.width;sim.y[i]=sim.height*.5+this.originY[i]*sim.height;sim.vx[i]=sim.vy[i]=0;}
   sim.gridReady=false;
  }
+ get colorMix(){const t=Math.max(0,Math.min(1,(this.tick-this.hold)/(this.duration-this.hold)));return t*t*(3-2*t);}
  get emission(){if(this.tick>=this.duration)return 0;if(this.tick<=this.hold)return .45*Math.pow(this.tick/this.hold,3);return Math.exp(-(this.tick-this.hold-1)/8);}
  step(sim,dt=1){
   if(this.tick>=this.duration)return false;this.tick+=dt;

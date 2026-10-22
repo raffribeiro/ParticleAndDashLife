@@ -1,14 +1,15 @@
-import {canvasSize} from './canvas-size.js?v=1.25.2';
-import {FarParticles} from './far-particles.js?v=1.25.2';
-import {splitDrawLayers} from './draw-order.js?v=1.25.2';
-import {EventEffects} from './effects.js?v=1.25.2';
-import {TrailHistory} from './trail-history.js?v=1.25.2';
-import {CurvedTrails} from './curved-trails.js?v=1.25.2';
-import {COLORS} from './simulation.js?v=1.25.2';
-import {Bloom} from './bloom.js?v=1.25.2';
-import {Backdrop} from './backdrop.js?v=1.25.2';
-import {CreatureMesh} from './creature-mesh.js?v=1.25.2';
-import {DEFAULT_PALETTE} from './color.js?v=1.25.2';
+import {openingColors} from './opening-colors.js?v=1.25.3';
+import {canvasSize} from './canvas-size.js?v=1.25.3';
+import {FarParticles} from './far-particles.js?v=1.25.3';
+import {splitDrawLayers} from './draw-order.js?v=1.25.3';
+import {EventEffects} from './effects.js?v=1.25.3';
+import {TrailHistory} from './trail-history.js?v=1.25.3';
+import {CurvedTrails} from './curved-trails.js?v=1.25.3';
+import {COLORS} from './simulation.js?v=1.25.3';
+import {Bloom} from './bloom.js?v=1.25.3';
+import {Backdrop} from './backdrop.js?v=1.25.3';
+import {CreatureMesh} from './creature-mesh.js?v=1.25.3';
+import {DEFAULT_PALETTE} from './color.js?v=1.25.3';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {
@@ -71,13 +72,14 @@ export class Renderer {
   if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
   const baseBloom=this.bloom.intensity;this.bloom.intensity=baseBloom*(1+3*(s.openingGlow||0));
   const bloom=this.bloom.begin(w,h);if(!bloom&&typeof gl.bindFramebuffer==='function'){gl.bindFramebuffer(gl.FRAMEBUFFER,null);}gl.viewport(0,0,w,h);
-  if(this.lastX!==s.x||this.lastWidth!==s.width||this.lastHeight!==s.height){
+  if(this.lastX!==s.x||this.lastWidth!==s.width||this.lastHeight!==s.height||this.lastOpeningColorMix!==(s.openingColorMix??1)){
+   const displayPalette=openingColors(this.palette,s.openingColorMix??1);this.curves.palette=displayPalette;
    const stride=this.instancing?8:60;
    gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
    // Capacity grows with headroom: fish birth/death changes the count often.
    if(!this.data||this.data.length<s.count*stride){this.data=new Float32Array(Math.ceil(s.count*1.25)*stride);gl.bufferData(gl.ARRAY_BUFFER,this.data.byteLength,gl.DYNAMIC_DRAW);}
    for(let i=0;i<s.count;i++){
-    const c=this.palette[s.type[i]],copies=this.instancing?1:6;
+    const c=displayPalette[s.type[i]],copies=this.instancing?1:6;
     for(let vertex=0;vertex<copies;vertex++){
      let offset=this.instancing?i*8:i*60+vertex*10;
      if(!this.instancing){this.data[offset++]=TRIANGLES[vertex*2];this.data[offset++]=TRIANGLES[vertex*2+1];}
@@ -85,7 +87,7 @@ export class Renderer {
      this.data[offset+5]=((s.minor?.[i]??0)*201+(s.fx?.[i]??149))*4+Math.floor(Math.min(3.99,s.energy[i])*2)/2+Math.min(1,s.pulse?.[i]||0)*.49;this.data[offset+6]=s.vx[i];this.data[offset+7]=s.vy[i];
     }
    }
-   gl.bufferSubData(gl.ARRAY_BUFFER,0,this.data.subarray(0,s.count*stride));this.history.update(s,performance.now());s.changed=null;this.lastX=s.x;this.lastWidth=s.width;this.lastHeight=s.height;
+   gl.bufferSubData(gl.ARRAY_BUFFER,0,this.data.subarray(0,s.count*stride));this.history.update(s,performance.now());s.changed=null;this.lastOpeningColorMix=s.openingColorMix??1;this.lastX=s.x;this.lastWidth=s.width;this.lastHeight=s.height;
   }
   gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);this.backdrop.draw(w,h,performance.now()/1000);
   this.curves.draw(s,this.history,predict,this.trail,this.buffer);
