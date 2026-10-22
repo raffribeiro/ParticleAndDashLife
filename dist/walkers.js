@@ -246,10 +246,14 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
     c.softStrand=null;
     const [x,y]=this.hipPosition(w,l,sim),ox=c.x[0],oy=c.y[0];
     if(!part.docked){
-     const dx=wrappedDelta(x-ox,sim.width),dy=wrappedDelta(y-oy,sim.height),distance=Math.hypot(dx,dy),step=Math.min(1,1.6/Math.max(.001,distance));
+     // Follow the moving mount during approach so a fast torso cannot outrun docking.
+     const driftX=part.lastRoot?wrappedDelta(x-part.lastRoot[0],sim.width):0,driftY=part.lastRoot?wrappedDelta(y-part.lastRoot[1],sim.height):0;
+     part.lastRoot=[x,y];
+     if(Math.hypot(driftX,driftY)>12){this.releaseFish(c);continue;}
+     const dx=wrappedDelta(x-ox-driftX,sim.width),dy=wrappedDelta(y-oy-driftY,sim.height),distance=Math.hypot(dx,dy),step=Math.min(1,1.6/Math.max(.001,distance));
      // Approach as one intact fish, rather than stretching every vertebra toward the hip.
-     for(let k=0;k<c.x.length;k++){c.x[k]+=dx*step;c.y[k]+=dy*step;}
-     c.vx=dx*step;c.vy=dy*step;c.legJoints=null;c.legStretch=1;part.blend=.001;
+     for(let k=0;k<c.x.length;k++){c.x[k]+=driftX+dx*step;c.y[k]+=driftY+dy*step;}
+     c.vx=driftX+dx*step;c.vy=driftY+dy*step;c.legJoints=null;c.legStretch=1;part.blend=.001;
      if(distance>2)continue;
      part.docked=true;part.dockPose=Array.from(c.x,(_,k)=>[wrappedDelta(c.x[k]-x,sim.width),wrappedDelta(c.y[k]-y,sim.height)]);
      continue;
