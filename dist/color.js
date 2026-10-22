@@ -34,6 +34,8 @@ export const ROLES=[
  {role:'secondary',L:.76,C:.16,dh:-12,minL:.68},{role:'secondary',L:.79,C:.17,dh:12,minL:.7},
  {role:'accent',L:.93,C:.26,dh:-8,minL:.74},{role:'accent',L:.95,C:.24,dh:8,minL:.76}
 ];
+// Stable ±6% chroma variation adds subtle colour separation without flickering.
+export const CHROMA_VARIATION=[.94,1.04,.96,1.05,1.03,.95];
 export const SPECIES_SHARE=[.3,.3,.15,.15,.05,.05];
 // Triadic hue triples (120° apart in OKLCH): d = dominant, s = secondary, a = accent.
 export const PALETTES={
@@ -54,7 +56,7 @@ export function makePalette(preset='abyss',rotate=0){
  const build=(r,i,cap)=>{
   const h=wrapHue(hues[i]+r.dh+rotate);let L=r.L;
   // Keep chroma: some hues (blue, magenta) cannot be very light and saturated in sRGB, so lower L just enough.
-  while(L>r.minL&&maxChroma(L,h)<r.C*.92)L-=.01;const C=Math.min(r.C,cap,maxChroma(L,h));
+  while(L>r.minL&&maxChroma(L,h)<r.C*.92)L-=.01;const C=Math.min(r.C*CHROMA_VARIATION[i],cap,maxChroma(L,h));
   return {_C:C,role:r.role,hue:h,rgb:oklchToSrgb(L,C,h),rim:oklchToSrgb(Math.min(.97,L+.1),C*.7,h),deep:oklchToSrgb(Math.max(.3,L-.24),C*1.1,h),accent:oklchToSrgb(.94,Math.min(.1,Math.max(.06,C*.55)),(h+180)%360)};
  };
  const out=[],chroma=i=>out[i]._C;
