@@ -120,3 +120,21 @@ test('upkeep grows with body size; a starving big body breaks into smaller organ
  s.energy.fill(.4);for(let t=0;t<STARVE_STEPS;t++)w.upkeep(a,s,1);assert.equal(w.list.length,2);assert.ok(w.list.every(o=>o.members.length>=3&&o.members.length<=6));assert.equal(w.fragments,1);
  const owner=new Map();w.list.forEach((o,k)=>o.members.forEach(i=>owner.set(i,k)));assert.ok(s.bonds.every(([p,q])=>owner.get(p)===owner.get(q)),'no bonds between pieces');});
 test('bigger bodies are slower in general: size pace falls with circle count',async()=>{const {sizePace}=await import('../dist/walkers.js');assert.ok(sizePace(3)>1.1);assert.ok(sizePace(12)<.55);assert.ok(sizePace(3)>sizePace(12)*2);assert.ok(sizePace(24)>=.3);});
+test('a leg left beyond its elastic reach detaches after sustained backward strain',()=>{
+ const s=cluster(),w=new Walkers(()=>.5),pool=fishParts(8),a=w.create(s,[0,1,2,3,4]);
+ for(let t=0;t<80;t++)w.step(s,1,pool);
+ const c=pool.find(c=>c.attachment?.role==='leg'),l=a.legs.find(l=>'leg:'+l.hip===c.attachment.slot),base=l.upper+l.lower;
+ const [x,y]=w.hipPosition(a,l,s);a.body.vx=1;a.body.vy=0;l.fx=x-base*1.6;l.fy=y;l.lift=0;
+ for(let t=0;t<10;t++)w.poseParts(a,s,pool,1);assert.ok(c.attachment,'brief strain is tolerated');
+ const ids=pool.map(c=>c.id),count=s.count;
+ for(let t=0;t<20;t++)w.poseParts(a,s,pool,1);
+ assert.equal(c.attachment,null);assert.ok(c.release);assert.equal(c.legJoints,null);assert.ok(c.recruitAfter>w.tick);
+ assert.deepEqual(pool.map(c=>c.id),ids);assert.equal(s.count,count);
+ c.release=null;w.recruit(a,s,pool);assert.equal(c.attachment,null,'cannot instantly snap back');
+});
+test('leg strain recovers and a long forward reach does not count as lagging behind',()=>{
+ const s=cluster(),w=new Walkers(()=>.5),pool=fishParts(8),a=w.create(s,[0,1,2,3,4]);for(let t=0;t<80;t++)w.step(s,1,pool);
+ const c=pool.find(c=>c.attachment?.role==='leg'),l=a.legs.find(l=>'leg:'+l.hip===c.attachment.slot),base=l.upper+l.lower,[x,y]=w.hipPosition(a,l,s);a.body.vx=1;a.body.vy=0;l.lift=0;
+ l.fx=x-base*1.6;l.fy=y;for(let t=0;t<8;t++)w.poseParts(a,s,pool,1);
+ l.fx=x+base*1.6;for(let t=0;t<40;t++)w.poseParts(a,s,pool,1);assert.ok(c.attachment);assert.equal(c.attachment.strain,0);
+});

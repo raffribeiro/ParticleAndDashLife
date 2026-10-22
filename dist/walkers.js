@@ -215,7 +215,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
    if(fish.some(c=>c.attachment?.walker===w.id&&c.attachment.slot===slot.slot))continue;
    if(w.cohesion<=0)continue;
    let best=null,distance=75;
-   for(const c of fish){if(c.dead||c.attachment||c.release)continue;const d=Math.hypot(wrappedDelta(c.x[0]-cx,sim.width),wrappedDelta(c.y[0]-cy,sim.height));const score=d/(w.clan&&c.memory?.clan===w.clan?1.6:1);if(d<75&&score<distance){distance=score;best=c;}}
+   for(const c of fish){if(c.dead||c.attachment||c.release||(c.recruitAfter||0)>this.tick)continue;const d=Math.hypot(wrappedDelta(c.x[0]-cx,sim.width),wrappedDelta(c.y[0]-cy,sim.height));const score=d/(w.clan&&c.memory?.clan===w.clan?1.6:1);if(d<75&&score<distance){distance=score;best=c;}}
    if(best){w.clan=w.clan||best.memory?.clan||'colony:'+w.id;best.attachment={walker:w.id,clan:w.clan,blend:0,...slot};
     if(slot.role==='leg'){const l=w.legs.find(l=>l.hip===slot.hip),length=(best.spacing||3.4)*(best.x.length-1);l.upper=length*.48;l.lower=length*.52;l.stride=length*.22;l.init=false;}
    }
@@ -237,6 +237,18 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
     const [x,y]=this.hipPosition(w,l,sim),ox=c.x[0],oy=c.y[0];
     let dx=wrappedDelta(l.fx-x,sim.width),dy=wrappedDelta(l.fy-y,sim.height)-l.lift*3;
     const d=Math.hypot(dx,dy)||1,base=l.upper+l.lower;
+    // Measure strain before IK clamps the displayed limb to its elastic limit.
+    const speed=Math.hypot(w.body?.vx||0,w.body?.vy||0);
+    const forwardX=speed>.12?w.body.vx/speed:a.hx,forwardY=speed>.12?w.body.vy/speed:a.hy;
+    const behind=dx*forwardX+dy*forwardY<-.65*base;
+    const overloaded=part.blend>=.95&&behind&&d>base*1.22;
+    part.strain=overloaded?(part.strain||0)+dt:Math.max(0,(part.strain||0)-dt*2);
+    if(part.strain>=24){
+     c.recruitAfter=this.tick+180;this.releaseFish(c);c.legJoints=null;c.legStretch=1;
+     l.init=false;l.stretch=1;
+     w.legCount=fish.filter(f=>f.attachment?.walker===w.id&&f.attachment.role==='leg').length;
+     this.events.push({kind:'break',x:c.x[0],y:c.y[0],species:c.species});continue;
+    }
     const desired=clamp(d/(base*.94),1,1.28);
     l.stretch=(l.stretch??1)+(desired-(l.stretch??1))*(1-Math.exp(-.18*dt));
     // Enough extension to preserve contact, capped to avoid rubber-band limbs.
