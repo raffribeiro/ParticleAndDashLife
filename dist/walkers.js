@@ -225,7 +225,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
    if(fish.some(c=>c.attachment?.walker===w.id&&c.attachment.slot===slot.slot))continue;
    if(w.cohesion<=0)continue;
    let best=null,distance=75;
-   for(const c of fish){if(c.dead||c.attachment||c.release||(c.recruitAfter||0)>this.tick)continue;const d=Math.hypot(wrappedDelta(c.x[0]-cx,sim.width),wrappedDelta(c.y[0]-cy,sim.height));const score=d/(w.clan&&c.memory?.clan===w.clan?1.6:1);if(d<75&&score<distance){distance=score;best=c;}}
+   for(const c of fish){if(c.dead||c.attachment||c.release||(c.recruitAfter||0)>this.tick)continue;const mount=slot.role==='leg'?this.hipPosition(w,w.legs.find(l=>l.hip===slot.hip),sim):[cx,cy];const d=Math.hypot(wrappedDelta(c.x[0]-mount[0],sim.width),wrappedDelta(c.y[0]-mount[1],sim.height));const score=d/(w.clan&&c.memory?.clan===w.clan?1.6:1);if(d<75&&score<distance){distance=score;best=c;}}
    if(best){w.clan=w.clan||best.memory?.clan||'colony:'+w.id;best.attachment={walker:w.id,clan:w.clan,blend:0,...slot};
     if(slot.role==='leg'){const l=w.legs.find(l=>l.hip===slot.hip),length=(best.spacing||3.4)*(best.x.length-1);l.upper=length*.48;l.lower=length*.52;l.stride=length*.22;l.init=false;}
    }
@@ -245,6 +245,15 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
      stepSoftStrand(c,root,[w.body?.vx||0,w.body?.vy||0],this.tick,sim.width,sim.height,dt,join);continue;}
     c.softStrand=null;
     const [x,y]=this.hipPosition(w,l,sim),ox=c.x[0],oy=c.y[0];
+    if(!part.docked){
+     const dx=wrappedDelta(x-ox,sim.width),dy=wrappedDelta(y-oy,sim.height),distance=Math.hypot(dx,dy),step=Math.min(1,1.6/Math.max(.001,distance));
+     // Approach as one intact fish, rather than stretching every vertebra toward the hip.
+     for(let k=0;k<c.x.length;k++){c.x[k]+=dx*step;c.y[k]+=dy*step;}
+     c.vx=dx*step;c.vy=dy*step;c.legJoints=null;c.legStretch=1;part.blend=.001;
+     if(distance>2)continue;
+     part.docked=true;part.dockPose=Array.from(c.x,(_,k)=>[wrappedDelta(c.x[k]-x,sim.width),wrappedDelta(c.y[k]-y,sim.height)]);
+     continue;
+    }
     if(part.blend>=.95&&Math.hypot(wrappedDelta(x-ox,sim.width),wrappedDelta(y-oy,sim.height))>Math.max(10,(l.upper+l.lower)*.45)){
      this.releaseFish(c);w.legCount=fish.filter(f=>f.attachment?.walker===w.id&&f.attachment.role==='leg').length;continue;
     }
@@ -275,7 +284,9 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
     for(let k=0;k<c.x.length;k++){
      const u=k/(c.x.length-1),split=l.upper/(l.upper+l.lower),j=u<split?0:1,f=u<split?u/split:(u-split)/(1-split);
      const tx=J[j][0]+(J[j+1][0]-J[j][0])*f,ty=J[j][1]+(J[j+1][1]-J[j][1])*f;
-     c.x[k]=tx+wrappedDelta(c.x[k]-tx,sim.width)*(1-join);c.y[k]=ty+wrappedDelta(c.y[k]-ty,sim.height)*(1-join);
+     const source=part.dockPose?.[k];
+     c.x[k]=source?x+source[0]+wrappedDelta(tx-x-source[0],sim.width)*join:tx+wrappedDelta(c.x[k]-tx,sim.width)*(1-join);
+     c.y[k]=source?y+source[1]+wrappedDelta(ty-y-source[1],sim.height)*join:ty+wrappedDelta(c.y[k]-ty,sim.height)*(1-join);
     }
     c.vx=wrappedDelta(c.x[0]-ox,sim.width);c.vy=wrappedDelta(c.y[0]-oy,sim.height);
     c.heading=Math.atan2(c.y[0]-c.y[1],c.x[0]-c.x[1]);

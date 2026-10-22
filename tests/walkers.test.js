@@ -53,10 +53,11 @@ test('assembled legs use one knee with fixed bones and an exact planted foot',()
 });
 
 test('moving single-knee legs stretch elastically within the limit',()=>{
- const s=cluster(),w=new Walkers(()=>.5),pool=fishParts(8);w.create(s,[0,1,2,3,4]);
+ const s=cluster(),w=new Walkers(()=>.5),pool=fishParts(8);w.create(s,[0,1,2,3,4]);let checked=0;
  for(let t=0;t<150;t++){for(let i=0;i<s.count;i++){s.x[i]=(s.x[i]+1.5)%s.width;s.vx[i]=1.5;}w.step(s,1,pool);
-  for(const c of pool.filter(c=>c.attachment?.role==='leg')){const J=c.legJoints,total=c.spacing*(c.x.length-1)*(c.legStretch||1);assert.ok(c.legStretch>=1&&c.legStretch<=1.28);for(let k=1;k<3;k++)assert.ok(Math.abs(Math.hypot(J[k][0]-J[k-1][0],J[k][1]-J[k-1][1])-total*(k===1?.48:.52))<.01);}
+  for(const c of pool.filter(c=>c.attachment?.role==='leg')){const J=c.legJoints,total=c.spacing*(c.x.length-1)*(c.legStretch||1);if(!J){assert.ok(!c.attachment.docked||c.attachment.blend<.1);continue;}checked++;assert.ok(c.legStretch>=1&&c.legStretch<=1.28);for(let k=1;k<3;k++)assert.ok(Math.abs(Math.hypot(J[k][0]-J[k-1][0],J[k][1]-J[k-1][1])-total*(k===1?.48:.52))<.01);}
  }
+ assert.ok(checked>0);
 });
 test('body transfers weight toward planted material legs, ignoring airborne and missing legs',()=>{
  const s=cluster(),w=new Walkers(()=>.5),a=w.create(s,[0,1,2,3,4]);a.cohesion=1;a.materialParts=true;
@@ -149,3 +150,5 @@ test('a lost leg detaches at its current pose instead of snapping to the body',(
  const c=pool.find(c=>c.attachment?.role==='leg'),x=[...c.x],y=[...c.y];a.body.x+=120;w.poseParts(a,s,pool,1);
  assert.equal(c.attachment,null);assert.deepEqual([...c.x],x);assert.deepEqual([...c.y],y);assert.equal(c.legJoints,null);assert.ok(c.reunionDelay>=300);
 });
+
+test('fish dock intact before morphing into a walking leg',()=>{const s=cluster(),w=new Walkers(()=>.5),a=w.create(s,[0,1,2,3,4]),pool=fishParts(1),c=pool[0];c.x=Float64Array.from(c.x,x=>x-35);const relative=[...c.x].map(x=>x-c.x[0]);w.step(s,1,pool);assert.ok(c.attachment);assert.ok(!c.attachment.docked);assert.equal(c.legJoints,null);for(let k=0;k<c.x.length;k++)assert.ok(Math.abs(c.x[k]-c.x[0]-relative[k])<1e-8);for(let t=0;t<120;t++)w.step(s,1,pool);assert.ok(c.attachment.docked);assert.equal(c.attachment.blend,1);assert.equal(c.legJoints.length,3);});
