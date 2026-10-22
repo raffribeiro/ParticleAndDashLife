@@ -1,15 +1,15 @@
-import {openingColors} from './opening-colors.js?v=1.25.4';
-import {canvasSize} from './canvas-size.js?v=1.25.4';
-import {FarParticles} from './far-particles.js?v=1.25.4';
-import {splitDrawLayers} from './draw-order.js?v=1.25.4';
-import {EventEffects} from './effects.js?v=1.25.4';
-import {TrailHistory} from './trail-history.js?v=1.25.4';
-import {CurvedTrails} from './curved-trails.js?v=1.25.4';
-import {COLORS} from './simulation.js?v=1.25.4';
-import {Bloom} from './bloom.js?v=1.25.4';
-import {Backdrop} from './backdrop.js?v=1.25.4';
-import {CreatureMesh} from './creature-mesh.js?v=1.25.4';
-import {DEFAULT_PALETTE} from './color.js?v=1.25.4';
+import {openingColors} from './opening-colors.js?v=1.25.5';
+import {canvasSize} from './canvas-size.js?v=1.25.5';
+import {FarParticles} from './far-particles.js?v=1.25.5';
+import {splitDrawLayers} from './draw-order.js?v=1.25.5';
+import {EventEffects} from './effects.js?v=1.25.5';
+import {TrailHistory} from './trail-history.js?v=1.25.5';
+import {CurvedTrails} from './curved-trails.js?v=1.25.5';
+import {COLORS} from './simulation.js?v=1.25.5';
+import {Bloom} from './bloom.js?v=1.25.5';
+import {Backdrop} from './backdrop.js?v=1.25.5';
+import {CreatureMesh} from './creature-mesh.js?v=1.25.5';
+import {DEFAULT_PALETTE} from './color.js?v=1.25.5';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {
@@ -70,7 +70,7 @@ export class Renderer {
   const gl=this.gl,css=canvasSize(this.canvas,s),dpr=Math.min(devicePixelRatio,1.25)*this.scale,w=Math.max(1,Math.round(css.width*dpr)),h=Math.max(1,Math.round(css.height*dpr));
   this.cssWidth=css.width;this.cssHeight=css.height;
   if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
-  const baseBloom=this.bloom.intensity;this.bloom.intensity=baseBloom*(1+3*(s.openingGlow||0));
+  const baseBloom=this.bloom.intensity;this.bloom.intensity=baseBloom*(1+11*(s.openingGlow||0));
   const bloom=this.bloom.begin(w,h);if(!bloom&&typeof gl.bindFramebuffer==='function'){gl.bindFramebuffer(gl.FRAMEBUFFER,null);}gl.viewport(0,0,w,h);
   if(this.lastX!==s.x||this.lastWidth!==s.width||this.lastHeight!==s.height||this.lastOpeningColorMix!==(s.openingColorMix??1)){
    const displayPalette=openingColors(this.palette,s.openingColorMix??1);this.curves.palette=displayPalette;
