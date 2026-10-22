@@ -52,7 +52,8 @@ export class Ecology{
    const target=b.resting?.12:1;b.activity+=(target-b.activity)*(1-Math.exp(-dt*.06));
    if(d<160&&(threatened||b.attention>20)){const direction=threatened?-1:b.curiosity;b.steerX+=px/(d||1)*direction*.04;b.steerY+=py/(d||1)*direction*.04;}
    if(isFish){
-    if(a.memory){a.memory.ticks-=dt;if(a.memory.ticks<=0)a.memory=null;else if(!a.attachment){
+    a.reunionDelay=Math.max(0,(a.reunionDelay||0)-dt);
+    if(a.memory){a.memory.ticks-=dt;if(a.memory.ticks<=0)a.memory=null;else if(!a.attachment&&!a.release&&!a.reunionDelay){
      const friends=a.memory.partners.map(id=>peers.get(id)).filter(c=>c&&!c.dead);
      for(const c of friends.slice(0,4)){const dx=wrappedDelta(c.x[0]-x,W),dy=wrappedDelta(c.y[0]-y,H),length=Math.hypot(dx,dy);if(length>25&&length<200){b.steerX+=dx/length*.008;b.steerY+=dy/length*.008;}}
     }}

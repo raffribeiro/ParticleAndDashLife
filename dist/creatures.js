@@ -1,3 +1,4 @@
+import {stepSoftStrand} from './soft-strand.js?v=1.24.0';
 // Procedural fish drawn as literal rectangles: kinematic spines (follow-the-leader with bend limits) steered by
 // explicit world rules. Every rule reads the same world the particles live in:
 //  1 hunger    – seek the prey particle species (same food chain as particles)
@@ -121,14 +122,18 @@ export class Creatures {
    if(c.age>=c.lifespan)c.dead=true;
    return;
   }
-  const release=c.release,oldX=release?c.x.slice():null,oldY=release?c.y.slice():null;
-  this.swim(c,sim,pointer);
-  if(release){
-   release.age++;const t=Math.min(1,release.age/30),mix=t*t*(3-2*t);
-   for(let k=0;k<c.x.length;k++){c.x[k]=oldX[k]+wrappedDelta(c.x[k]-oldX[k],sim.width)*mix;c.y[k]=oldY[k]+wrappedDelta(c.y[k]-oldY[k],sim.height)*mix;}
-   c.vx=wrappedDelta(c.x[0]-oldX[0],sim.width);c.vy=wrappedDelta(c.y[0]-oldY[0],sim.height);c.legStretch=1+(c.legStretch-1||0)*(1-mix);
-   if(t===1)c.release=null;
+  if(c.release){
+   const r=c.release;r.age++;r.vx??=Math.cos(c.heading)*.8;r.vy??=Math.sin(c.heading)*.8;
+   stepSoftStrand(c,[c.x[0]+r.vx,c.y[0]+r.vy],[r.vx,r.vy],r.age,sim.width,sim.height);
+   c.heading=Math.atan2(r.vy,r.vx);c.age++;c.energy=Math.max(.25,c.energy-.0003);c.hunting=false;
+   // Released parts drift in place first; no school, memory or body target can pull them back.
+   for(const item of c.stomach)item.timer--;
+   const done=c.stomach.filter(item=>item.timer<=0);c.stomach=c.stomach.filter(item=>item.timer>0);if(this.added)for(const item of done)this.excrete(c,item);
+   if(c.age>=c.lifespan)c.dead=true;
+   if(r.age>=60){c.release=null;c.softStrand=null;}
+   return;
   }
+  this.swim(c,sim,pointer);
  }
  swim(c,sim,pointer){
   const w=sim.width,h=sim.height,rng=this.rng,hx=c.x[0],hy=c.y[0],cos=Math.cos(c.heading),sin=Math.sin(c.heading);

@@ -154,9 +154,19 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   for(const c of fish)if(c.attachment?.walker===b.id){if((c.attachment.role==='leg'&&!valid.has(c.attachment.slot))||occupied.has(c.attachment.slot))this.releaseFish(c);else{c.attachment.walker=a.id;c.attachment.clan=a.clan;occupied.add(c.attachment.slot);}}
   this.list=this.list.filter(w=>w!==b);this.events.push({kind:'assemble',x:sim.x[a.members[0]],y:sim.y[a.members[0]],species:sim.type[a.members[0]]});
  }
- releaseFish(c){c.softStrand=null;if(c.attachment&&!c.dead){
-  c.memory={clan:c.attachment.clan||'colony:'+c.attachment.walker,partners:c.attachment.partners||(this.fish||[]).filter(o=>o!==c&&o.attachment?.walker===c.attachment.walker).map(o=>o.id).slice(0,8),ticks:900};
-  c.release={age:0};}c.attachment=null;}
+ releaseFish(c){
+  if(!c.attachment)return;
+  const part=c.attachment,owner=this.list.find(w=>w.id===part.walker),body=owner?.body;
+  let dx=body?wrappedDelta(c.x[0]-body.x,body.width||1e9):Math.cos(c.heading||0),dy=body?wrappedDelta(c.y[0]-body.y,body.height||1e9):Math.sin(c.heading||0),d=Math.hypot(dx,dy);
+  if(d<1){dx=Math.cos(c.heading||0);dy=Math.sin(c.heading||0);d=1;}
+  c.softStrand=null;c.legJoints=null;c.legStretch=1;c.organism=null;
+  c.recruitAfter=Math.max(c.recruitAfter||0,this.tick+300);c.reunionDelay=300;
+  if(!c.dead){c.memory={clan:part.clan||'colony:'+part.walker,partners:part.partners||[],ticks:900};
+   c.release={age:0,vx:dx/d*.8+(body?.vx||0)*.3,vy:dy/d*.8+(body?.vy||0)*.3};}
+  const leg=owner?.legs.find(l=>'leg:'+l.hip===part.slot);if(leg){leg.init=false;leg.stretch=1;}
+  c.attachment=null;
+ }
+
  step(sim,dt=1,fish=null){
   this.fish=fish;sim.bodyBondKeys=new Set();
   this.remap(sim);this.tick++;
@@ -235,6 +245,9 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
      stepSoftStrand(c,root,[w.body?.vx||0,w.body?.vy||0],this.tick,sim.width,sim.height,dt,join);continue;}
     c.softStrand=null;
     const [x,y]=this.hipPosition(w,l,sim),ox=c.x[0],oy=c.y[0];
+    if(part.blend>=.95&&Math.hypot(wrappedDelta(x-ox,sim.width),wrappedDelta(y-oy,sim.height))>Math.max(10,(l.upper+l.lower)*.45)){
+     this.releaseFish(c);w.legCount=fish.filter(f=>f.attachment?.walker===w.id&&f.attachment.role==='leg').length;continue;
+    }
     let dx=wrappedDelta(l.fx-x,sim.width),dy=wrappedDelta(l.fy-y,sim.height)-l.lift*3;
     const d=Math.hypot(dx,dy)||1,base=l.upper+l.lower;
     // Measure strain before IK clamps the displayed limb to its elastic limit.

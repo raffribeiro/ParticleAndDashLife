@@ -144,3 +144,8 @@ test('a fast body cannot outrun its one or two assembled walking legs',()=>{
  const vx=a.members.reduce((n,i)=>n+s.vx[i],0)/a.members.length,vy=a.members.reduce((n,i)=>n+s.vy[i],0)/a.members.length;
  assert.ok(Math.hypot(vx,vy)<=(count===1?.85:1.2)+1e-5);}
 });
+test('a lost leg detaches at its current pose instead of snapping to the body',()=>{
+ const s=cluster(),w=new Walkers(()=>.5),pool=fishParts(8),a=w.create(s,[0,1,2,3,4]);for(let t=0;t<80;t++)w.step(s,1,pool);
+ const c=pool.find(c=>c.attachment?.role==='leg'),x=[...c.x],y=[...c.y];a.body.x+=120;w.poseParts(a,s,pool,1);
+ assert.equal(c.attachment,null);assert.deepEqual([...c.x],x);assert.deepEqual([...c.y],y);assert.equal(c.legJoints,null);assert.ok(c.reunionDelay>=300);
+});

@@ -51,3 +51,8 @@ test('rule 10 mood: friends gather particles and never bite; enemies make prey p
  const f=run(true),e=run(false);assert.equal(f.bites,0);assert.ok(f.d1<e.d1,'friends stay closer: '+f.d1.toFixed(1)+' vs '+e.d1.toFixed(1));assert.ok(e.d1>e.d0,'enemies flee');});
 
 test('fish natural lifespan spans 400 to 900 seconds',()=>{for(let seed=0;seed<20;seed++){const f=createFish('rect',lcg(seed),400,300,0,1,seed);assert.ok(f.lifespan>=24000&&f.lifespan<=54000);}});
+test('released fish drift from their current pose without swimming toward the former body',()=>{
+ const s=world(),cs=new Creatures(1),c=createFish('rect',lcg(7),400,300,0,1,8);c.release={age:0,vx:.8,vy:.1};c.behavior={steerX:-100,steerY:0,activity:1,speed:1};
+ for(let k=0;k<60;k++){const x=c.x[0],y=c.y[0];cs.update(c,s,null);assert.ok(Math.abs(c.x[0]-x-.8)<1e-6);assert.ok(Math.abs(c.y[0]-y-.1)<1e-6);}
+ assert.equal(c.release,null);assert.ok(Math.abs(c.x[0]-448)<1e-6);assert.equal(c.legJoints,null);
+});
