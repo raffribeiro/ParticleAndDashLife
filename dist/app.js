@@ -79,7 +79,7 @@ $('disturbance-interval').oninput=e=>{disturbance.interval=+e.target.value;$('di
 $('disturbance-strength').oninput=e=>{disturbance.strength=+e.target.value/100;$('disturbance-strength-value').textContent=e.target.value+'%';};
 $('disturb-now').onclick=()=>worker.postMessage({kind:'disturb'});
 function wallpaper(){document.body.classList.remove('idle');document.body.classList.toggle('wallpaper');}$('wallpaper').onclick=wallpaper;$('restore').onclick=wallpaper;
-document.addEventListener('keydown',e=>{if(/INPUT|BUTTON|SUMMARY/.test(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();togglePause();}if(e.key.toLowerCase()==='h')wallpaper();if(e.key.toLowerCase()==='f'&&!e.repeat){e.preventDefault();wallpaper();}});
+document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&!e.repeat&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();wallpaper();return;}if(/INPUT|BUTTON|SUMMARY/.test(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();togglePause();}if(e.key.toLowerCase()==='h')wallpaper();});
 function fullscreen(){if(document.fullscreenElement)document.exitFullscreen?.();else document.documentElement.requestFullscreen?.().catch(()=>{});}canvas.ondblclick=fullscreen;
 // Screensaver: hide UI and cursor after 30 s without input; any input restores.
 function wake(){document.body.classList.remove('idle');clearTimeout(idleTimer);if($('screensaver').checked)idleTimer=setTimeout(()=>document.body.classList.add('idle'),30000);}
