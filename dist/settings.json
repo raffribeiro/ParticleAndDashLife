@@ -1,0 +1,49 @@
+{
+  "version": "1.24.0",
+  "saved": "2026-10-22T16:20:15.160Z",
+  "inputs": {
+    "population": "600",
+    "radius": "150",
+    "force": "1.5",
+    "inertia": "100",
+    "glow": "100",
+    "trail": "0",
+    "wiggle": "200",
+    "bloom": "160",
+    "grain": "40",
+    "hue": "0",
+    "palette-auto": true,
+    "palette-interval": "45",
+    "ecology": true,
+    "bonding": true,
+    "behavior-auto": false,
+    "behavior-interval": "30",
+    "combat-enabled": true,
+    "walkers-enabled": true,
+    "dynamic-mobility": true,
+    "creatures-enabled": true,
+    "creature-count": "30",
+    "creature-mood": true,
+    "mood-period": "15",
+    "creature-wake": true,
+    "disturbance-enabled": true,
+    "disturbance-interval": "20",
+    "disturbance-strength": "60",
+    "screensaver": true
+  },
+  "behavior": {
+    "mode": "symbiosis"
+  },
+  "palette": {
+    "preset": "generated",
+    "triple": {
+      "name": "Gerada",
+      "d": 31.840715396490765,
+      "s": 157.5985033256925,
+      "a": 276.2342020141824
+    },
+    "rotate": 0,
+    "auto": true,
+    "interval": 45
+  }
+}

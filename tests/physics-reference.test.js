@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {Simulation,interaction,mobilityTarget,wrappedDelta} from '../dist/simulation.js';
+test('optimized pair forces match an independent all-pairs reference across world sizes and radii',()=>{
+for(const [width,height] of [[1000,700],[40,40],[100,300]])for(const radius of [25,85,150]){let seed=876;const rng=()=>((seed=(seed*1664525+1013904223)>>>0)/4294967296);const s=new Simulation(36,width,height,rng);s.ecology=false;s.radius=radius;const expected=[];
+for(let i=0;i<s.count;i++){let ax=0,ay=0,density=0;for(let j=0;j<s.count;j++){if(i===j)continue;let dx=wrappedDelta(s.x[j]-s.x[i],width),dy=wrappedDelta(s.y[j]-s.y[i],height),d=Math.hypot(dx,dy);if(d>=radius)continue;if(d<.01){dx=i<j?.001:-.001;dy=0;d=.001;}const f=interaction(d/radius,s.matrix[s.type[i]][s.type[j]]);ax+=f*dx/d;ay+=f*dy/d;if(d<radius*.6)density+=1-d/(radius*.6);}const mobility=1+(mobilityTarget(density,1)-1)*.06,response=s.force*((1-s.friction)/.18)*mobility*s.friction;let vx=ax*response,vy=ay*response;const speed=Math.hypot(vx,vy),cap=5*mobility;if(speed>cap){vx*=cap/speed;vy*=cap/speed;}expected.push({vx,vy,mobility});}
+s.step();for(let i=0;i<s.count;i++)for(const k of ['vx','vy','mobility'])assert.ok(Math.abs(s[k][i]-expected[i][k])<.00001,`${width}/${height}/${radius} ${i} ${k}`);
+}});

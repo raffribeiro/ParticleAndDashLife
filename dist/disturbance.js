@@ -1,0 +1,14 @@
+import {wrappedDelta} from './simulation.js?v=1.24.0';
+export class Disturbances {
+ constructor(){this.enabled=true;this.interval=5;this.strength=1.5;this.elapsed=0;this.count=0;this.wave=null;}
+ configure(options){if(!options)return;this.pulseOnly=!!options.pulseOnly;this.enabled=!!options.enabled;this.interval=Math.max(5,Math.min(120,Number(options.interval)||5));this.strength=Math.max(.1,Math.min(1.5,Number(options.strength)||1.5));this.elapsed=Math.min(this.elapsed,this.interval);}
+ advance(sim,seconds){if(this.wave){const wave=this.wave;wave.age+=seconds;if(wave.age>1.8)this.wave=null;else{const front=wave.radius*wave.age/1.8,width=wave.radius*.22;for(let i=0;i<sim.count;i++){const dx=wrappedDelta(sim.x[i]-wave.x,sim.width),dy=wrappedDelta(sim.y[i]-wave.y,sim.height),d=Math.hypot(dx,dy);if(d<.001||d>wave.radius)continue;const shell=Math.exp(-(((d-front)/width)**2)),push=shell*this.strength*.30*(1-wave.age/2.2)*seconds*60;this.push(sim,i,dx/d,dy/d,push);
+  // Scale wave: every particle swells as the front passes through it (no ring is drawn).
+  if(sim.pulse&&shell>.05){const v=shell*.85*(1-.5*wave.age/1.8);if(sim.pulse[i]<v)sim.pulse[i]=v;}}}}if(!this.enabled)return null;this.elapsed+=seconds;if(this.elapsed+1e-8<this.interval)return null;return this.trigger(sim);}
+ push(sim,i,dx,dy,amount){sim.vx[i]+=(dx-dy*.35)*amount;sim.vy[i]+=(dy+dx*.35)*amount;const speed=Math.hypot(sim.vx[i],sim.vy[i]);const cap=5*(sim.mobility?.[i]??1);if(speed>cap){sim.vx[i]*=cap/speed;sim.vy[i]*=cap/speed;}}
+ trigger(sim){this.elapsed=0;const kind=(this.count++%2===0||this.pulseOnly)?'pulse':'affinities',event={kind,id:this.count};
+ if(kind==='pulse'){const source=Math.min(sim.count-1,Math.floor(sim.rng()*sim.count));event.x=sim.x[source];event.y=sim.y[source];event.radius=Math.min(480,Math.min(sim.width,sim.height)*.48);this.wave={...event,age:0};for(let i=0;i<sim.count;i++){let dx=wrappedDelta(sim.x[i]-event.x,sim.width),dy=wrappedDelta(sim.y[i]-event.y,sim.height),distance=Math.hypot(dx,dy);if(distance>=event.radius)continue;if(distance<.001){dx=Math.cos(i*2.39996);dy=Math.sin(i*2.39996);distance=1;}const kick=this.strength*8*(1-distance/event.radius);this.push(sim,i,dx/distance,dy/distance,kick);}}
+ else {sim.matrix=sim.matrix.map(row=>row.map(v=>Math.max(-1,Math.min(1,v+(sim.rng()<.5?-1:1)*(.05+sim.rng()*.20)*this.strength))));event.matrix=sim.matrix.map(row=>[...row]);}
+ return event;
+ }
+}
