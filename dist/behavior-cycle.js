@@ -1,4 +1,4 @@
-import {PRESETS} from './simulation.js?v=1.27.4';
+import {PRESETS} from './simulation.js?v=1.27.5';
 // Aleatório mode cycles through the four behaviors with a 4 s cross-fade.
 const KEYS=['symbiosis','currents','predator','colonies'];
 export class BehaviorCycle{

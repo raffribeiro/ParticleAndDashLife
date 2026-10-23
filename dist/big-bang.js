@@ -1,13 +1,13 @@
 export class BigBang{
  constructor(sim){this.tick=0;this.hold=18;this.duration=60;this.launched=false;
-  const radius=Math.max(1,Math.min(28,Math.min(sim.width,sim.height)*.045));
+  const radius=Math.max(1,Math.min(22,Math.min(sim.width,sim.height)*.035));
   this.originX=new Float32Array(sim.count);this.originY=new Float32Array(sim.count);
   for(let i=0;i<sim.count;i++){const angle=i*2.3999632297,r=radius*Math.sqrt(sim.rng());this.originX[i]=Math.cos(angle)*r/sim.width;this.originY[i]=Math.sin(angle)*r/sim.height;sim.x[i]=sim.width*.5+this.originX[i]*sim.width;sim.y[i]=sim.height*.5+this.originY[i]*sim.height;sim.vx[i]=sim.vy[i]=0;}
   sim.gridReady=false;
  }
  get particleScale(){
   if(this.tick>=this.duration)return 1;
-  if(this.tick<=this.hold){const t=this.tick/this.hold;return 1+.3*Math.sin(Math.PI*t)+.22*t*t*Math.sin(12*t+22*t*t);}
+  if(this.tick<=this.hold){const t=this.tick/this.hold;return .78+.16*Math.sin(Math.PI*t)+.14*t*t*Math.sin(12*t+22*t*t);}
   const age=this.tick-this.hold-1;return 1+.7*Math.exp(-age/6)*Math.cos(age*.48);
  }
  get colorMix(){const t=Math.max(0,Math.min(1,(this.tick-this.hold)/(this.duration-this.hold)));return t*t*(3-2*t);}

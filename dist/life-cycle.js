@@ -1,9 +1,9 @@
-import {inheritFeatures} from './features.js?v=1.27.4';
-import {ensureNeeds} from './needs.js?v=1.27.4';
-import {VALENCE,wrappedDelta} from './simulation.js?v=1.27.4';
-import {inheritTraits,reproductionRules} from './traits.js?v=1.27.4';
-import {createFish} from './creatures.js?v=1.27.4';
-import {SPECIES_PATTERN} from './simulation.js?v=1.27.4';
+import {inheritFeatures} from './features.js?v=1.27.5';
+import {ensureNeeds} from './needs.js?v=1.27.5';
+import {VALENCE,wrappedDelta} from './simulation.js?v=1.27.5';
+import {inheritTraits,reproductionRules} from './traits.js?v=1.27.5';
+import {createFish} from './creatures.js?v=1.27.5';
+import {SPECIES_PATTERN} from './simulation.js?v=1.27.5';
 export class LifeCycle{
  constructor(target=300){this.target=target;this.tick=0;this.births=0;this.catches=0;}
  total(sim,creatures){return sim.count+creatures.list.reduce((n,c)=>n+4+c.stomach.length,0);}
