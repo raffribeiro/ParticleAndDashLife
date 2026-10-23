@@ -1,13 +1,14 @@
-import {BigBang} from './big-bang.js?v=1.26.1';
-import {mergeChanged} from './pending-changes.js?v=1.26.1';
-import {DoubleTap} from './tap-gesture.js?v=1.26.1';
-import {canvasSize} from './canvas-size.js?v=1.26.1';
-import {FrameClock} from './timing.js?v=1.26.1';
+import {SceneGesture} from './scene-interaction.js?v=1.27.0';
+import {BigBang} from './big-bang.js?v=1.27.0';
+import {mergeChanged} from './pending-changes.js?v=1.27.0';
+import {DoubleTap} from './tap-gesture.js?v=1.27.0';
+import {canvasSize} from './canvas-size.js?v=1.27.0';
+import {FrameClock} from './timing.js?v=1.27.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.26.1';
+let lowFps=0,lowUntil=0;export const VERSION='1.27.0';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.26.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.26.1';import {Renderer} from './renderer.js?v=1.26.1';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.27.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.27.0';import {Renderer} from './renderer.js?v=1.27.0';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
@@ -18,7 +19,7 @@ const paletteState={rotate:0,preset:'generated',triple:{...OPENING_PALETTE},auto
 const clock=new FrameClock(60);let started=false,settingsReady=false,openingRevision=null;let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});
 function sync(){worker.postMessage({kind:'config',matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:s.width,height:s.height});}
-worker.onmessage=({data:m})=>{if(m.revision!==revision)return;if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.openingScale=m.openingScale??1;s.openingColorMix=m.openingColorMix??1;s.openingGlow=m.openingGlow||0;s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
+worker.onmessage=({data:m})=>{if(m.revision!==revision)return;canvas.classList.toggle('grabbing',!!m.dragging);if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.openingScale=m.openingScale??1;s.openingColorMix=m.openingColorMix??1;s.openingGlow=m.openingGlow||0;s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
  s.matrix=m.behavior.matrix;
  if(behaviorConfig.enabled){const changed=current!==m.behavior.key;current=m.behavior.key;
   document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset==='random'));
@@ -29,7 +30,7 @@ worker.onmessage=({data:m})=>{if(m.revision!==revision)return;if(m.openingWaitin
 }mobilityMin=m.mobilityMin;mobilityMax=m.mobilityMax;disturbanceCount=m.disturbanceCount;nextDisturbance=m.nextDisturbance;if(m.disturbanceEvent){const event=m.disturbanceEvent;if(event.kind==='affinities'){$('last-disturbance').textContent='✧ As afinidades estão mudando';s.matrix=event.matrix;matrix();if(!behaviorConfig.enabled){document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));current='custom';$('preset-description').textContent='As afinidades mudaram suavemente. Um novo equilíbrio está surgindo.';}}else{$('last-disturbance').textContent='◌ Onda de impulso atravessando a colônia';}}needsRender=true;};
 worker.onerror=()=>{$('notice').textContent='A simulação foi interrompida. Recarregue a página para reiniciar.';$('notice').style.display='block';};
 worker.postMessage({kind:'init',waitForFrame:true,count:s.count,width:s.width,height:s.height});
-const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;s.historyRevision=revision;worker.postMessage({kind:'reset',waitForFrame:true,revision,count:s.count});needsRender=true;};
+const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;sceneGesture.cancel();canvas.classList.remove('grabbing');s.historyRevision=revision;worker.postMessage({kind:'reset',waitForFrame:true,revision,count:s.count});needsRender=true;};
 function legend(){if(!$('legend'))return;$('legend').replaceChildren();for(const c of COLORS){const dot=document.createElement('i');dot.style.color=dot.style.background=c;$('legend').append(dot);}}
 function paletteSource(){return paletteState.preset==='generated'?paletteState.triple:paletteState.preset;}
 function commitPalette(p){livePalette=p;COLORS.splice(0,COLORS.length,...p.colors);renderer.setPalette(p);const root=document.documentElement.style,hex=c=>'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');root.setProperty('--mint',p.colors[4]);root.setProperty('--bg',hex(p.background));root.setProperty('--panel',hex(p.panel));document.querySelector('meta[name=theme-color]').content='#'+p.background.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
@@ -94,11 +95,20 @@ canvas.addEventListener('pointercancel',e=>doubleTap.cancel(e.pointerId));
 // Screensaver: hide UI and cursor after 30 s without input; any input restores.
 function wake(){document.body.classList.remove('idle');clearTimeout(idleTimer);if($('screensaver').checked)idleTimer=setTimeout(()=>document.body.classList.add('idle'),30000);}
 for(const ev of ['pointermove','pointerdown','keydown','wheel','touchstart'])addEventListener(ev,wake,{passive:true});$('screensaver').onchange=wake;wake();
-function point(e){const rect=canvas.getBoundingClientRect();pointer={x:(e.clientX-rect.left)/rect.width*s.width,y:(e.clientY-rect.top)/rect.height*s.height,force:e.buttons?(e.shiftKey?-2:2):0};sync();}canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);point(e);};canvas.onpointermove=e=>{point(e);};canvas.onpointerleave=()=>{pointer=null;sync();};canvas.onpointerup=canvas.onpointercancel=()=>{pointer=null;sync();};
+const sceneGesture=new SceneGesture();
+function worldPoint(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*s.width,y:(e.clientY-r.top)/r.height*s.height};}
+function interact(action,e){worker.postMessage({kind:'interact',revision,action,...(e?worldPoint(e):{})});}
+function cancelGesture(){sceneGesture.cancel();canvas.classList.remove('grabbing');interact('cancel');}
+canvas.onpointerdown=e=>{if(!started||e.button!==0||!e.isPrimary)return;if(!sceneGesture.down(e.pointerId,e.clientX,e.clientY))return;canvas.setPointerCapture(e.pointerId);interact('grab',e);};
+canvas.onpointermove=e=>{if(sceneGesture.move(e.pointerId,e.clientX,e.clientY))interact('move',e);};
+canvas.onpointerup=e=>{const action=sceneGesture.up(e.pointerId,e.clientX,e.clientY);if(action)interact(action,e);if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);};
+canvas.onpointercancel=canvas.onlostpointercapture=()=>{if(sceneGesture.pointer)cancelGesture();};
+window.addEventListener('blur',cancelGesture);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelGesture();});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();paused=true;updatePause();$('notice').textContent='A GPU interrompeu a renderização. Recarregue para continuar.';$('notice').style.display='block';});
 document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;sample=performance.now();frames=0;needsRender=true;clock.reset();sync();});
 for(const event of ['click','input','change','keydown'])document.addEventListener(event,()=>{needsRender=true;sync();});
-function resizeCanvas(){const {width:w,height:h}=canvasSize(canvas);if(w===s.width&&h===s.height)return;for(let i=0;i<s.count;i++){s.x[i]=s.x[i]/s.width*w;s.y[i]=s.y[i]/s.height*h;if(s.x[i]>=w)s.x[i]=0;if(s.y[i]>=h)s.y[i]=0;}s.width=w;s.height=h;pointer=null;needsRender=true;sync();}
+function resizeCanvas(){const {width:w,height:h}=canvasSize(canvas);if(w===s.width&&h===s.height)return;cancelGesture();for(let i=0;i<s.count;i++){s.x[i]=s.x[i]/s.width*w;s.y[i]=s.y[i]/s.height*h;if(s.x[i]>=w)s.x[i]=0;if(s.y[i]>=h)s.y[i]=0;}s.width=w;s.height=h;pointer=null;needsRender=true;sync();}
 const canvasObserver=new ResizeObserver(resizeCanvas);canvasObserver.observe(canvas);window.addEventListener('resize',resizeCanvas);
 function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(now))return;stepPalette(now);if(!paused||needsRender){renderer.draw(s,paused?0:Math.min(1.5,(now-snapshotAt)/(1000/60)));needsRender=false;if(started&&settingsReady&&openingRevision===revision&&!paused&&!document.hidden){const readyRevision=openingRevision;openingRevision=null;requestAnimationFrame(()=>worker.postMessage({kind:'start-opening',revision:readyRevision}));}}frames++;if(!sample)sample=now;if(now-sample>=1000){const fps=frames*1000/(now-sample);$('fps').textContent=Math.round(fps);
    // fps watch: below 60 (57.5 to ignore 1-frame jitter) the counter and the corner tag turn red; drops are logged to the local server.

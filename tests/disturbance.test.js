@@ -5,3 +5,5 @@ test('disabled disturbances freeze countdown and do not accumulate missed events
 test('manual disturbance resets countdown and preserves alternation',()=>{const s=new Simulation(2),d=new Disturbances();d.interval=20;d.advance(s,10);assert.equal(d.trigger(s).kind,'pulse');assert.equal(d.elapsed,0);assert.equal(d.trigger(s).kind,'affinities');});
 
 test('pulse-only disturbances preserve the symbiosis matrix',()=>{const sim=new Simulation(10,800,600,()=>.5),d=new Disturbances();d.configure({enabled:true,pulseOnly:true});const matrix=sim.matrix.map(row=>[...row]);for(let i=0;i<6;i++)assert.equal(d.trigger(sim).kind,'pulse');assert.deepEqual(sim.matrix,matrix);});
+
+test('a click always emits a local pulse at the requested point and preserves affinities',()=>{const sim=new Simulation(3,800,600,()=>.5),d=new Disturbances();sim.x.set([100,140,500]);sim.y.set([100,100,400]);d.count=1;const before=sim.matrix.map(r=>[...r]),ev=d.trigger(sim,{x:100,y:100});assert.equal(ev.kind,'pulse');assert.equal(ev.x,100);assert.equal(ev.y,100);assert.ok(sim.vx[1]>0);assert.equal(sim.vx[2],0);assert.deepEqual(sim.matrix,before);assert.equal(sim.count,3);});
