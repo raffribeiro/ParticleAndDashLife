@@ -1,4 +1,4 @@
-import {wrappedDelta} from './simulation.js?v=1.27.0';
+import {wrappedDelta} from './simulation.js?v=1.27.1';
 const wrap=(v,size)=>(v%size+size)%size;
 const shiftPair=(p,dx,dy)=>{if(p){p[0]+=dx;p[1]+=dy;}};
 function shiftFish(c,dx,dy){

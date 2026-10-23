@@ -1,5 +1,5 @@
 {
-  "version": "1.27.0",
+  "version": "1.27.1",
   "saved": "2026-10-22T16:20:15.160Z",
   "inputs": {
     "population": "600",
@@ -37,10 +37,10 @@
   "palette": {
     "preset": "generated",
     "triple": {
-      "name": "Amarelo e laranja",
-      "d": 75,
-      "s": 45,
-      "a": 295
+      "name": "Lima, rosa e azul",
+      "d": 240,
+      "s": 0,
+      "a": 120
     },
     "rotate": 0,
     "auto": true,
