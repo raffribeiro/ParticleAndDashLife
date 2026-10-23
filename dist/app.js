@@ -1,15 +1,16 @@
-import {SceneGesture} from './scene-interaction.js?v=1.29.1';
-import {BigBang} from './big-bang.js?v=1.29.1';
-import {mergeChanged} from './pending-changes.js?v=1.29.1';
-import {DoubleTap} from './tap-gesture.js?v=1.29.1';
-import {canvasSize} from './canvas-size.js?v=1.29.1';
-import {FrameClock} from './timing.js?v=1.29.1';
+import {SceneGesture} from './scene-interaction.js?v=1.30.1';
+import {BigBang} from './big-bang.js?v=1.30.1';
+import {mergeChanged} from './pending-changes.js?v=1.30.1';
+import {DoubleTap} from './tap-gesture.js?v=1.30.1';
+import {canvasSize} from './canvas-size.js?v=1.30.1';
+import {FrameClock} from './timing.js?v=1.30.1';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.29.1';
+let lowFps=0,lowUntil=0;export const VERSION='1.30.1';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.29.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.29.1';import {Renderer} from './renderer.js?v=1.29.1';
-const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.30.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.30.1';import {Renderer} from './renderer.js?v=1.30.1';
+const $=id=>document.getElementById(id),canvas=$('universe');window.lumaLoader?.set(.45,'Preparando a GPU');let renderer;try{renderer=new Renderer(canvas);}catch(e){window.lumaLoader?.fail('Este navegador não conseguiu iniciar o WebGL.');$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
+window.lumaLoader?.set(.62,'Iniciando a simulação');let loaderSnapshot=false;
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 let requestedSize={width:s.width,height:s.height};
 const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bonding=true;const walkerConfig={enabled:true,max:24};const combatConfig={enabled:true};let disturbanceCount=0,nextDisturbance=20;
@@ -20,7 +21,7 @@ const paletteState={rotate:0,preset:'generated',triple:{...OPENING_PALETTE},auto
 const clock=new FrameClock(60);let started=false,settingsReady=false,openingRevision=null;let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});
 function sync(){worker.postMessage({kind:'config',matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:requestedSize.width,height:requestedSize.height});}
-worker.onmessage=({data:m})=>{if(m.revision!==revision||m.width!==requestedSize.width||m.height!==requestedSize.height)return;s.width=m.width;s.height=m.height;canvas.classList.toggle('grabbing',!!m.dragging);if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.openingScale=m.openingScale??1;s.openingColorMix=m.openingColorMix??1;s.openingGlow=m.openingGlow||0;s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
+worker.onmessage=({data:m})=>{if(!loaderSnapshot){loaderSnapshot=true;needsRender=true;window.lumaLoader?.set(.88,'Formando o universo');}if(m.revision!==revision||m.width!==requestedSize.width||m.height!==requestedSize.height)return;s.width=m.width;s.height=m.height;canvas.classList.toggle('grabbing',!!m.dragging);if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.openingScale=m.openingScale??1;s.openingColorMix=m.openingColorMix??1;s.openingGlow=m.openingGlow||0;s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
  s.matrix=m.behavior.matrix;
  if(behaviorConfig.enabled){const changed=current!==m.behavior.key;current=m.behavior.key;
   document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset==='random'));
@@ -29,7 +30,7 @@ worker.onmessage=({data:m})=>{if(m.revision!==revision||m.width!==requestedSize.
   if(changed||(m.behavior.changing&&performance.now()-lastBehaviorPaint>750)){matrix();lastBehaviorPaint=performance.now();}
  }else $('behavior-status').textContent='Simbiose fixa';
 }mobilityMin=m.mobilityMin;mobilityMax=m.mobilityMax;disturbanceCount=m.disturbanceCount;nextDisturbance=m.nextDisturbance;if(m.disturbanceEvent){const event=m.disturbanceEvent;if(event.kind==='affinities'){$('last-disturbance').textContent='✧ As afinidades estão mudando';s.matrix=event.matrix;matrix();if(!behaviorConfig.enabled){document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));current='custom';$('preset-description').textContent='As afinidades mudaram suavemente. Um novo equilíbrio está surgindo.';}}else{$('last-disturbance').textContent='◌ Onda de impulso atravessando a colônia';}}needsRender=true;};
-worker.onerror=()=>{$('notice').textContent='A simulação foi interrompida. Recarregue a página para reiniciar.';$('notice').style.display='block';};
+worker.onerror=()=>{window.lumaLoader?.fail('A simulação não conseguiu iniciar. Recarregue a página.');$('notice').textContent='A simulação foi interrompida. Recarregue a página para reiniciar.';$('notice').style.display='block';};
 worker.postMessage({kind:'init',waitForFrame:true,count:s.count,width:s.width,height:s.height});
 const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;sceneGesture.cancel();canvas.classList.remove('grabbing');s.historyRevision=revision;worker.postMessage({kind:'reset',waitForFrame:true,revision,count:s.count});needsRender=true;};
 function legend(){if(!$('legend'))return;$('legend').replaceChildren();for(const c of COLORS){const dot=document.createElement('i');dot.style.color=dot.style.background=c;$('legend').append(dot);}}
@@ -111,7 +112,7 @@ document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;sample=pe
 for(const event of ['click','input','change','keydown'])document.addEventListener(event,()=>{needsRender=true;sync();});
 function resizeCanvas(){const next=canvasSize(canvas);if(next.width===requestedSize.width&&next.height===requestedSize.height)return;cancelGesture();requestedSize=next;pointer=null;needsRender=true;sync();}
 const canvasObserver=new ResizeObserver(resizeCanvas);canvasObserver.observe(canvas);window.addEventListener('resize',resizeCanvas);
-function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(now))return;stepPalette(now);if(!paused||needsRender){renderer.draw(s,paused?0:Math.min(1.5,(now-snapshotAt)/(1000/60)));needsRender=false;if(started&&settingsReady&&openingRevision===revision&&!paused&&!document.hidden){const readyRevision=openingRevision;openingRevision=null;requestAnimationFrame(()=>worker.postMessage({kind:'start-opening',revision:readyRevision}));}}frames++;if(!sample)sample=now;if(now-sample>=1000){const fps=frames*1000/(now-sample);$('fps').textContent=Math.round(fps);
+function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(now))return;stepPalette(now);if(!paused||needsRender){renderer.draw(s,paused?0:Math.min(1.5,(now-snapshotAt)/(1000/60)));needsRender=false;if(loaderSnapshot&&settingsReady)window.lumaLoader?.done();if(started&&settingsReady&&openingRevision===revision&&!paused&&!document.hidden){const readyRevision=openingRevision;openingRevision=null;requestAnimationFrame(()=>worker.postMessage({kind:'start-opening',revision:readyRevision}));}}frames++;if(!sample)sample=now;if(now-sample>=1000){const fps=frames*1000/(now-sample);$('fps').textContent=Math.round(fps);
    // fps watch: below 60 (57.5 to ignore 1-frame jitter) the counter and the corner tag turn red; drops are logged to the local server.
    {const low=!paused&&!document.hidden&&fps<57.5,tag=$('version');$('fps').classList.toggle('fps-low',low);
     if(low){lowFps=Math.round(fps);lowUntil=now+4000;if(!location.hostname.endsWith('github.io'))fetch('/fps-log',{method:'POST',body:JSON.stringify({fps:lowFps,scale:renderScale,stepMs:+stepMs.toFixed(1),count:s.count,orgs:s.walkers?.length||0,v:VERSION})}).catch(()=>{});}

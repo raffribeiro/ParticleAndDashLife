@@ -1,4 +1,22 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080c10"><meta name="description" content="Um ecossistema vivo de partículas e criaturas: alimentação, evolução e batalhas em uma experiência visual interativa. Gratuito para uso não comercial."><title>Particle &amp; Dash Life</title><meta property="og:title" content="Particle &amp; Dash Life"><meta property="og:site_name" content="Particle &amp; Dash Life"><meta property="og:type" content="website"><meta property="og:url" content="https://raffribeiro.github.io/ParticleAndDashLife/"><meta name="twitter:title" content="Particle &amp; Dash Life"><link rel="stylesheet" href="style.css?v=1.29.1"></head><body class="wallpaper awaiting-start">
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080c10"><meta name="description" content="Um ecossistema vivo de partículas e criaturas: alimentação, evolução e batalhas em uma experiência visual interativa. Gratuito para uso não comercial."><title>Particle &amp; Dash Life</title><meta property="og:title" content="Particle &amp; Dash Life"><meta property="og:site_name" content="Particle &amp; Dash Life"><meta property="og:type" content="website"><meta property="og:url" content="https://raffribeiro.github.io/ParticleAndDashLife/"><meta name="twitter:title" content="Particle &amp; Dash Life"><link rel="stylesheet" href="style.css?v=1.30.1"></head><body class="wallpaper awaiting-start">
+<div id="loader" role="status" aria-live="polite"><svg class="loader-art" viewBox="0 0 220 170" aria-hidden="true">
+<g class="dash dash-a"><path d="M110 12v14M52 40l10 9M168 40l-10 9M30 88h14M176 88h14"/></g>
+<g class="dash dash-b"><path d="M76 20l5 12M144 20l-5 12M36 62l13 5M184 62l-13 5"/></g>
+<g class="critter"><g class="legs"><path class="leg l1" d="M82 104l-12 22 6 18"/><path class="leg l2" d="M102 108l-4 24 10 14"/><path class="leg l3" d="M122 108l6 24-8 14"/><path class="leg l4" d="M140 102l14 22-4 18"/></g>
+<g class="blob"><circle cx="86" cy="88" r="24" fill="#ff3b30"/><circle cx="116" cy="76" r="28" fill="#2f6bff"/><circle cx="144" cy="92" r="20" fill="#22c55e"/><circle cx="112" cy="104" r="14" fill="#ff9f1c"/></g></g>
+<path class="ground" d="M62 152h96"/><path class="ground ground-b" d="M44 160h18M166 160h18"/>
+</svg><div class="loader-title">Particle <span>&amp; Dash Life</span></div><div class="loader-bar" aria-hidden="true"><b id="loader-fill"></b></div><div id="loader-text">Carregando módulos</div></div>
+<script>
+// Loading screen: shown before any module loads; app.js advances it through real stages and fades it out.
+(function(){var fill=document.getElementById('loader-fill'),text=document.getElementById('loader-text'),el=document.getElementById('loader'),p=.08,done=false;
+ function show(v,t){p=Math.max(p,v);fill.style.transform='scaleX('+p+')';if(t)text.textContent=t;}
+ // Gentle creep while modules download, never past 40% on its own.
+ var creep=setInterval(function(){if(p<.4)show(p+.015);},120);
+ var slow=setTimeout(function(){if(!done)text.textContent='Ainda carregando… isto pode levar alguns segundos';},12000);
+ window.lumaLoader={set:show,fail:function(t){clearInterval(creep);el.classList.add('failed');text.textContent=t||'Não foi possível iniciar. Recarregue a página.';},
+  done:function(){if(done)return;done=true;clearInterval(creep);clearTimeout(slow);show(1,'Pronto');setTimeout(function(){el.classList.add('leaving');setTimeout(function(){el.hidden=true;},700);},180);}};
+ show(.08);})();
+</script>
 <canvas id="universe" aria-label="Universo interativo de partículas"></canvas>
 <div id="start-screen"><button id="start-simulation" type="button" autofocus>Start Simulation</button></div>
 <header><a class="brand" href="./"><span class="logo">✳</span> Particle<span class="brand-sub">&amp; DASH LIFE</span></a><div class="header-right"><span class="live-dot"></span><span id="status">Universo em movimento</span><button id="wallpaper" title="Ocultar controles (F)">↗ <span>Modo wallpaper</span></button></div></header>
@@ -44,4 +62,4 @@
 <div class="toggle-row"><div><label for="screensaver">Screensaver</label><p class="hint">Oculta controles e cursor após 30 s parado · <kbd>F</kbd> mostrar/ocultar interface</p></div><input id="screensaver" type="checkbox" role="switch" checked></div>
 <div class="actions"><button id="pause" class="primary">Ⅱ Pausar</button><button id="reset" title="Redistribuir partículas">↻ Recomeçar</button><button id="random" title="Sortear novas afinidades">⚄</button><button id="save" title="Salvar todas as configurações (voltam ao recarregar)">Salvar</button></div>
 </aside></main>
-<footer><div><span class="live-dot"></span><strong id="count">300</strong> partículas <span class="separator">/</span> <strong id="fps">—</strong> fps <span id="feeding"></span></div><div class="instructions">Clique para perturbar <span>·</span> Arraste criaturas para mover <kbd>Espaço</kbd> pausar <kbd>F</kbd> mostrar/ocultar interface · Dois toques ou duplo clique: tela cheia</div></footer><button id="restore">✳ Mostrar controles</button><div id="notice" role="status"></div><script type="module" src="app.js?v=1.29.1"></script></body></html>
+<footer><div><span class="live-dot"></span><strong id="count">300</strong> partículas <span class="separator">/</span> <strong id="fps">—</strong> fps <span id="feeding"></span></div><div class="instructions">Clique para perturbar <span>·</span> Arraste criaturas para mover <kbd>Espaço</kbd> pausar <kbd>F</kbd> mostrar/ocultar interface · Dois toques ou duplo clique: tela cheia</div></footer><button id="restore">✳ Mostrar controles</button><div id="notice" role="status"></div><script type="module" src="app.js?v=1.30.1"></script></body></html>
