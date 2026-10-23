@@ -21,7 +21,7 @@ test('worker handles click pulses and fish drag/drop while paused, rejects stale
  try{
   worker.postMessage({kind:'init',count:300,width:900,height:650});worker.postMessage(config);
   await wait(()=>messages.at(-1)?.openingColorMix===1&&messages.at(-1)?.creatures.length>0);
-  worker.postMessage({...config,paused:true});await new Promise(r=>setTimeout(r,60));
+  worker.postMessage({...config,paused:true});await wait(()=>messages.at(-1)?.paused===true);
   const fish=messages.at(-1).creatures[0],x=fish.points[0],y=fish.points[1];let n=messages.length;
   worker.postMessage({kind:'interact',action:'grab',revision:0,x,y});await wait(()=>messages.length>n);n=messages.length;
   worker.postMessage({kind:'interact',action:'move',revision:0,x:x+80,y:y+30});await wait(()=>messages.length>n);const moved=messages.at(-1);assert.equal(moved.dragging,true);
