@@ -14,10 +14,10 @@
 //   head → crit chance; tail → turn rate and dash reach; armor/muscle/regeneration/agility features.
 // Anti-dominance: √n damage, mass decay above 14 circles, cap 24, type triangle, underdog bonus,
 // faction share scaling (leading faction hits softer, rare factions hit harder), post-kill fatigue.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.28.0';
-import {featureLevel} from './features.js?v=1.28.0';
-import {ensureNeeds,nourish} from './needs.js?v=1.28.0';
-import {ensureTraits} from './traits.js?v=1.28.0';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.28.1';
+import {featureLevel} from './features.js?v=1.28.1';
+import {ensureNeeds,nourish} from './needs.js?v=1.28.1';
+import {ensureTraits} from './traits.js?v=1.28.1';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 export const FACTIONS=[{key:'swarm',name:'Enxame'},{key:'colossus',name:'Colosso'},{key:'mystic',name:'Místico'}];
 export const FACTION_OF=[0,1,2,2,1,0];

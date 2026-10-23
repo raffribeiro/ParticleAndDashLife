@@ -1,14 +1,14 @@
-import {SceneGesture} from './scene-interaction.js?v=1.28.0';
-import {BigBang} from './big-bang.js?v=1.28.0';
-import {mergeChanged} from './pending-changes.js?v=1.28.0';
-import {DoubleTap} from './tap-gesture.js?v=1.28.0';
-import {canvasSize} from './canvas-size.js?v=1.28.0';
-import {FrameClock} from './timing.js?v=1.28.0';
+import {SceneGesture} from './scene-interaction.js?v=1.28.1';
+import {BigBang} from './big-bang.js?v=1.28.1';
+import {mergeChanged} from './pending-changes.js?v=1.28.1';
+import {DoubleTap} from './tap-gesture.js?v=1.28.1';
+import {canvasSize} from './canvas-size.js?v=1.28.1';
+import {FrameClock} from './timing.js?v=1.28.1';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.28.0';
+let lowFps=0,lowUntil=0;export const VERSION='1.28.1';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.28.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.28.0';import {Renderer} from './renderer.js?v=1.28.0';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.28.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.28.1';import {Renderer} from './renderer.js?v=1.28.1';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 let requestedSize={width:s.width,height:s.height};

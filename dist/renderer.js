@@ -1,15 +1,15 @@
-import {openingColors} from './opening-colors.js?v=1.28.0';
-import {canvasSize} from './canvas-size.js?v=1.28.0';
-import {FarParticles} from './far-particles.js?v=1.28.0';
-import {splitDrawLayers} from './draw-order.js?v=1.28.0';
-import {EventEffects} from './effects.js?v=1.28.0';
-import {TrailHistory} from './trail-history.js?v=1.28.0';
-import {CurvedTrails} from './curved-trails.js?v=1.28.0';
-import {COLORS} from './simulation.js?v=1.28.0';
-import {Bloom} from './bloom.js?v=1.28.0';
-import {Backdrop} from './backdrop.js?v=1.28.0';
-import {CreatureMesh} from './creature-mesh.js?v=1.28.0';
-import {DEFAULT_PALETTE} from './color.js?v=1.28.0';
+import {openingColors} from './opening-colors.js?v=1.28.1';
+import {canvasSize} from './canvas-size.js?v=1.28.1';
+import {FarParticles} from './far-particles.js?v=1.28.1';
+import {splitDrawLayers} from './draw-order.js?v=1.28.1';
+import {EventEffects} from './effects.js?v=1.28.1';
+import {TrailHistory} from './trail-history.js?v=1.28.1';
+import {CurvedTrails} from './curved-trails.js?v=1.28.1';
+import {COLORS} from './simulation.js?v=1.28.1';
+import {Bloom} from './bloom.js?v=1.28.1';
+import {Backdrop} from './backdrop.js?v=1.28.1';
+import {CreatureMesh} from './creature-mesh.js?v=1.28.1';
+import {DEFAULT_PALETTE} from './color.js?v=1.28.1';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {
@@ -24,12 +24,13 @@ export class Renderer {
    uniform float confined;uniform mediump float time;uniform float openingScale;uniform float prediction;uniform vec2 viewport;uniform vec2 world;uniform float layer;
    varying vec3 tint;varying float e;varying vec2 local;varying float headSize;varying float stg;varying float prog;varying float seed;varying float pulse;varying float minor;
    void main(){float q=floor(energy/4.+.0001);float en=energy-q*4.;pulse=fract(en*2.+.001)/.98;en=floor(en*2.+.001)/2.;float k=floor(q/201.+.0001);float fx=q-k*201.;minor=k;stg=floor(fx/50.+.0001);prog=(fx-stg*50.)/49.;seed=fract(sin(dot(pos,vec2(12.9898,78.233)))*43758.5453);// Uniform size for every circle (stage only animates: pop, ripple, breath, hollowing).
-   headSize=24.*1.6*openingScale;local=corner*headSize*.3;vec2 trapped=vec2(0.);
+   headSize=24.*1.6*openingScale*(confined>.5?.8:1.);local=corner*headSize*.3;vec2 trapped=vec2(0.);
    if(confined>.5){vec2 q=pos-world*.5;float r=max(length(q),.001),a=atan(q.y,q.x);
     float pressure=pow(max(0.,cos(a-time*5.5)),10.)*3.2+sin(a*3.+time*14.)*.8;
     trapped=q/r*pressure+vec2(sin(time*31.+seed*6.2832),cos(time*37.+seed*9.))* .45;
    }
-   vec2 head=mod(pos+trapped+velocity*prediction,world)/world*vec2(2.,-2.)+vec2(-1.,1.);gl_Position=vec4(head+local/viewport*vec2(2.,-2.),0.,1.);
+   vec2 displayed=confined>.5?world*.5+(pos-world*.5+trapped)*.8:pos;
+   vec2 head=mod(displayed+velocity*prediction,world)/world*vec2(2.,-2.)+vec2(-1.,1.);gl_Position=vec4(head+local/viewport*vec2(2.,-2.),0.,1.);
    // Two passes: hit/pulsing particles (pulse > 0.04) are drawn in the top pass, above bodies and limbs.
    if((pulse>.04?1.:0.)!=layer)gl_Position=vec4(2.,2.,2.,1.);tint=color;e=en;}`));
   gl.attachShader(p,shader(gl.FRAGMENT_SHADER,`
