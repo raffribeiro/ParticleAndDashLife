@@ -1,15 +1,15 @@
-import {openingColors} from './opening-colors.js?v=1.25.6';
-import {canvasSize} from './canvas-size.js?v=1.25.6';
-import {FarParticles} from './far-particles.js?v=1.25.6';
-import {splitDrawLayers} from './draw-order.js?v=1.25.6';
-import {EventEffects} from './effects.js?v=1.25.6';
-import {TrailHistory} from './trail-history.js?v=1.25.6';
-import {CurvedTrails} from './curved-trails.js?v=1.25.6';
-import {COLORS} from './simulation.js?v=1.25.6';
-import {Bloom} from './bloom.js?v=1.25.6';
-import {Backdrop} from './backdrop.js?v=1.25.6';
-import {CreatureMesh} from './creature-mesh.js?v=1.25.6';
-import {DEFAULT_PALETTE} from './color.js?v=1.25.6';
+import {openingColors} from './opening-colors.js?v=1.26.0';
+import {canvasSize} from './canvas-size.js?v=1.26.0';
+import {FarParticles} from './far-particles.js?v=1.26.0';
+import {splitDrawLayers} from './draw-order.js?v=1.26.0';
+import {EventEffects} from './effects.js?v=1.26.0';
+import {TrailHistory} from './trail-history.js?v=1.26.0';
+import {CurvedTrails} from './curved-trails.js?v=1.26.0';
+import {COLORS} from './simulation.js?v=1.26.0';
+import {Bloom} from './bloom.js?v=1.26.0';
+import {Backdrop} from './backdrop.js?v=1.26.0';
+import {CreatureMesh} from './creature-mesh.js?v=1.26.0';
+import {DEFAULT_PALETTE} from './color.js?v=1.26.0';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {
@@ -89,7 +89,7 @@ export class Renderer {
    }
    gl.bufferSubData(gl.ARRAY_BUFFER,0,this.data.subarray(0,s.count*stride));this.history.update(s,performance.now());s.changed=null;this.lastOpeningColorMix=s.openingColorMix??1;this.lastX=s.x;this.lastWidth=s.width;this.lastHeight=s.height;
   }
-  gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);this.backdrop.draw(w,h,performance.now()/1000);
+  gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);this.backdrop.draw(w,h,performance.now()/1000);if(bloom)this.bloom.foreground();
   this.curves.draw(s,this.history,predict,this.trail,this.buffer);
   if(this.layerSource!==s.creatures){this.layers=splitDrawLayers(s.creatures||[]);this.layerSource=s.creatures;}
   this.underMesh.showBonds=this.showBonds;
