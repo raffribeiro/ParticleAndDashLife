@@ -1,4 +1,4 @@
-import {wrappedDelta} from './simulation.js?v=1.28.1';
+import {wrappedDelta} from './simulation.js?v=1.29.0';
 export class TrailHistory {
  constructor(){this.size=24;this.interval=80;this.version=0;this.valid=0;}
  offset(id,age){const slot=(this.newest-Math.min(age,this.valid-1)+this.size)%this.size;return (id*this.size+slot)*4;}

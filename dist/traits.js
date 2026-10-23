@@ -1,4 +1,4 @@
-import {featureLevel} from './features.js?v=1.28.1';
+import {featureLevel} from './features.js?v=1.29.0';
 const clamp=v=>Math.max(.05,Math.min(.95,v));
 export function ensureTraits(a){if(!a.traits){const hunt=a.id%2?.72+(a.id%3)*.06:.12+(a.id%3)*.06;a.traits={hunt,escape:1-hunt,fecundity:1-hunt};}a.growth??=0;return a.traits;}
 export function inheritTraits(parent,rng=Math.random){const p=ensureTraits(parent),hunt=clamp(p.hunt+(rng()-.5)*.16);return {hunt,escape:1-hunt,fecundity:1-hunt};}

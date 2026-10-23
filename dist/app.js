@@ -1,14 +1,14 @@
-import {SceneGesture} from './scene-interaction.js?v=1.28.1';
-import {BigBang} from './big-bang.js?v=1.28.1';
-import {mergeChanged} from './pending-changes.js?v=1.28.1';
-import {DoubleTap} from './tap-gesture.js?v=1.28.1';
-import {canvasSize} from './canvas-size.js?v=1.28.1';
-import {FrameClock} from './timing.js?v=1.28.1';
+import {SceneGesture} from './scene-interaction.js?v=1.29.0';
+import {BigBang} from './big-bang.js?v=1.29.0';
+import {mergeChanged} from './pending-changes.js?v=1.29.0';
+import {DoubleTap} from './tap-gesture.js?v=1.29.0';
+import {canvasSize} from './canvas-size.js?v=1.29.0';
+import {FrameClock} from './timing.js?v=1.29.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.28.1';
+let lowFps=0,lowUntil=0;export const VERSION='1.29.0';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.28.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.28.1';import {Renderer} from './renderer.js?v=1.28.1';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.29.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.29.0';import {Renderer} from './renderer.js?v=1.29.0';
 const $=id=>document.getElementById(id),canvas=$('universe');let renderer;try{renderer=new Renderer(canvas);}catch(e){$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
 let requestedSize={width:s.width,height:s.height};
@@ -34,7 +34,7 @@ worker.postMessage({kind:'init',waitForFrame:true,count:s.count,width:s.width,he
 const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;sceneGesture.cancel();canvas.classList.remove('grabbing');s.historyRevision=revision;worker.postMessage({kind:'reset',waitForFrame:true,revision,count:s.count});needsRender=true;};
 function legend(){if(!$('legend'))return;$('legend').replaceChildren();for(const c of COLORS){const dot=document.createElement('i');dot.style.color=dot.style.background=c;$('legend').append(dot);}}
 function paletteSource(){return paletteState.preset==='generated'?paletteState.triple:paletteState.preset;}
-function commitPalette(p){livePalette=p;COLORS.splice(0,COLORS.length,...p.colors);renderer.setPalette(p);const root=document.documentElement.style,hex=c=>'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');root.setProperty('--mint',p.colors[4]);root.setProperty('--bg',hex(p.background));root.setProperty('--panel',hex(p.panel));document.querySelector('meta[name=theme-color]').content='#'+p.background.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
+function commitPalette(p){livePalette=p;COLORS.splice(0,COLORS.length,...p.colors);renderer.setPalette(p);const root=document.documentElement.style,hex=c=>'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');root.setProperty('--mint',p.colors[4]);for(const [key,i] of [['blue',0],['pink',2],['lime',4]])root.setProperty('--start-'+key,p.colors[i]);root.setProperty('--bg',hex(p.background));root.setProperty('--panel',hex(p.panel));document.querySelector('meta[name=theme-color]').content='#'+p.background.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
 // Palette changes cross-fade in OKLab over 6 s (instant with reduced motion or rotation).
 function applyPalette(animate=false){const target=makePalette(paletteSource(),paletteState.rotate);if(animate&&livePalette&&!matchMedia('(prefers-reduced-motion: reduce)').matches){paletteFrom=livePalette;paletteTo=target;paletteT0=performance.now();}else{paletteFrom=paletteTo=null;commitPalette(target);legend();matrix();}needsRender=true;}
 function markPalette(){document.querySelectorAll('.palette').forEach(x=>x.classList.toggle('active',x.dataset.palette===paletteState.preset));}

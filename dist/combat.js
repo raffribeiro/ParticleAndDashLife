@@ -14,10 +14,10 @@
 //   head → crit chance; tail → turn rate and dash reach; armor/muscle/regeneration/agility features.
 // Anti-dominance: √n damage, mass decay above 14 circles, cap 24, type triangle, underdog bonus,
 // faction share scaling (leading faction hits softer, rare factions hit harder), post-kill fatigue.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.28.1';
-import {featureLevel} from './features.js?v=1.28.1';
-import {ensureNeeds,nourish} from './needs.js?v=1.28.1';
-import {ensureTraits} from './traits.js?v=1.28.1';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.29.0';
+import {featureLevel} from './features.js?v=1.29.0';
+import {ensureNeeds,nourish} from './needs.js?v=1.29.0';
+import {ensureTraits} from './traits.js?v=1.29.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 export const FACTIONS=[{key:'swarm',name:'Enxame'},{key:'colossus',name:'Colosso'},{key:'mystic',name:'Místico'}];
 export const FACTION_OF=[0,1,2,2,1,0];
@@ -205,6 +205,25 @@ export class Combat{
   if(b.killRate>3)b.damage*=.9;
   b.damage=clamp(b.damage,.35,1.6);b.aggression=clamp(b.aggression,.7,1.8);walkers.formChance=b.formation;
  }
+ rivals(a,b){return a.combat?.rivalId===b.id&&this.tick<(a.combat.rivalUntil||0)||b.combat?.rivalId===a.id&&this.tick<(b.combat.rivalUntil||0);}
+ hostile(a,b){if(a===b||a.clan&&a.clan===b.clan)return false;return (a.stats?.faction??a.faction)!==(b.stats?.faction??b.faction)||this.rivals(a,b);}
+ updateRivalries(orgs,sim){
+  const alive=new Set(orgs.map(a=>a.id));
+  for(const a of orgs){const c=a.combat;if(c.rivalId&&(!alive.has(c.rivalId)||this.tick>=c.rivalUntil)){c.rivalId=null;c.rivalUntil=0;}}
+  if(this.tick%120)return;
+  let active=orgs.filter(a=>a.combat.rivalId).length/2;const limit=Math.max(1,Math.floor(orgs.length/6));
+  for(const a of orgs){const c=a.combat;if(active>=limit)break;if(c.rivalId||this.tick<(c.rivalAfter||0)||this.tick<c.fatigue||c.hp<c.maxHp*.4)continue;
+   let rival=null,best=160;
+   for(const b of orgs){const d=b.combat;if(a===b||a.stats.faction!==b.stats.faction||a.clan&&a.clan===b.clan||d.rivalId||this.tick<(d.rivalAfter||0)||this.tick<d.fatigue||d.hp<d.maxHp*.4)continue;
+    const distance=Math.hypot(wrappedDelta(b.body.x-a.body.x,sim.width),wrappedDelta(b.body.y-a.body.y,sim.height));if(distance<best){best=distance;rival=b;}
+   }
+   if(!rival)continue;
+   const pressure=Math.max(ensureNeeds(a).hunger,ensureNeeds(rival).hunger),territorial=a.behavior?.name==='territorial'||rival.behavior?.name==='territorial';
+   if(this.rng()>.18+pressure*.2+(territorial?.15:0))continue;
+   const until=this.tick+180+Math.floor(this.rng()*180),rest=900+Math.floor(this.rng()*600);
+   for(const [body,other] of [[a,rival],[rival,a]]){body.combat.rivalId=other.id;body.combat.rivalUntil=until;body.combat.rivalAfter=until+rest;}active++;
+  }
+ }
  step(sim,walkers,fish,creatures=null,dt=1){
   this.tick++;for(const e of this.fx)e.age+=dt;this.fx=this.fx.filter(e=>e.age<e.duration);
   this.stepStars(sim,walkers,dt);this.stepRipples(sim,dt);
@@ -222,17 +241,16 @@ export class Combat{
   this.absent=this.absent||[0,0,0];counts.forEach((n,f)=>{this.absent[f]=n?0:this.absent[f]+dt;});
   if(this.tick%120===0)for(let f=0;f<3;f++)if(this.absent[f]>600&&walkers.list.length<walkers.max+4){if(this.reseed(f,sim,walkers,orgs))this.absent[f]=0;}
   walkers.blockedFaction=this.factionShare.findIndex(share=>share>.5&&orgs.length>=4);
+  this.updateRivalries(orgs,sim);
   const owned=new Set(orgs.flatMap(a=>a.members));
   for(const a of orgs){
    if(a.dead)continue;const st=a.stats,c=a.combat,b=a.body,star=this.tick<c.starUntil;
    c.hp=Math.min(c.maxHp,c.hp+c.maxHp*st.regen*dt*(this.tick<(c.regenUntil||0)?6:1));
    if(this.agarEnabled)this.agar(a,sim,walkers,fish,owned);
-   // Pick the nearest enemy: other faction and other clan.
-   let target=null,best=(480+(ensureTraits(a).hunt||0)*100)*(this.bal?.aggression??1),allies=0,rival=null,rivalD=240;
-   for(const o of orgs){if(o===a||o.dead)continue;const dx=wrappedDelta(o.body.x-b.x,sim.width),dy=wrappedDelta(o.body.y-b.y,sim.height),d=Math.hypot(dx,dy);
-    const civilWar=(this.factionShare?.[st.faction]||0)>.6&&orgs.length>=5,friend=(a.clan&&a.clan===o.clan)||(o.stats.faction===st.faction&&!(civilWar&&a.clan!==o.clan));if(friend){if(d<180)allies++;if(!(a.clan&&a.clan===o.clan)&&d<rivalD){rivalD=d;rival=o;}continue;}if(d<best){best=d;target=o;}}
-   // No enemy around: skirmish with a nearby rival of the same faction (different body, different clan).
-   if(!target&&rival&&!(c.fatigue>this.tick))target=rival;
+   // A short same-type feud takes priority; otherwise pursue ordinary enemies.
+   let target=orgs.find(o=>o!==a&&!o.dead&&this.rivals(a,o))||null,best=target?-1:(480+(ensureTraits(a).hunt||0)*100)*(this.bal?.aggression??1),allies=0;
+   for(const o of orgs){if(o===a||o.dead)continue;const d=Math.hypot(wrappedDelta(o.body.x-b.x,sim.width),wrappedDelta(o.body.y-b.y,sim.height));
+    if(!this.hostile(a,o)){if(d<180)allies++;continue;}if(d<best){best=d;target=o;}}
    c.allies=allies;
    if(!target){c.engaged=false;continue;}
    const dx=wrappedDelta(target.body.x-b.x,sim.width),dy=wrappedDelta(target.body.y-b.y,sim.height),dist=Math.hypot(dx,dy)||1,dir=[dx/dist,dy/dist];
@@ -253,12 +271,12 @@ export class Combat{
    if(this.agarEnabled&&a.members.length>=target.members.length*1.3&&dist<st.radius*.65&&!targetStar){if(this.engulf(a,target,sim,walkers,fish))continue;}
    // Abilities.
    const abilities=abilitiesFor(st,a,sim,this.agarEnabled);c.abilities=abilities;
-   const civil=(this.factionShare?.[st.faction]||0)>.6&&orgs.length>=5,enemies=orgs.filter(o=>o!==a&&!o.dead&&!(a.clan&&a.clan===o.clan)&&(o.stats.faction!==st.faction||civil));
+   const enemies=orgs.filter(o=>o!==a&&!o.dead&&this.hostile(a,o));
    for(const k of abilities){if(this.tick<(c.cd[k]||0))continue;
     if(k==='dash'&&mode==='engage'&&dist>st.radius+target.stats.radius+10&&dist<230){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
     if(k==='shock'&&enemies.some(o=>Math.hypot(wrappedDelta(o.body.x-b.x,sim.width),wrappedDelta(o.body.y-b.y,sim.height))<st.radius+80+o.stats.radius)){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
     if(k==='orb'&&dist<330&&dist>40){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
-    if(k==='shield'&&(hpFrac<.6||this.orbs.some(o=>o.clan!==a.clan&&o.faction!==st.faction&&Math.hypot(wrappedDelta(o.x-b.x,sim.width),wrappedDelta(o.y-b.y,sim.height))<60))){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
+    if(k==='shield'&&(hpFrac<.6||this.orbs.some(o=>(!o.clan||o.clan!==a.clan)&&(o.faction!==st.faction||c.rivalId===o.owner&&this.tick<c.rivalUntil)&&Math.hypot(wrappedDelta(o.x-b.x,sim.width),wrappedDelta(o.y-b.y,sim.height))<60))){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
     if(k==='regen'&&(hpFrac<.55||(st.faction===2&&st.n<5))){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
     if(k==='split'&&mode==='engage'&&ratio<.6&&dist<260&&walkers.list.length<walkers.max+3&&(this.factionShare?.[st.faction]||0)<=.5){this.use(k,a,target,sim,walkers,fish,enemies,dir,dist);break;}
    }
@@ -286,7 +304,8 @@ export class Combat{
   const release=o=>{if(o.i>=0&&o.i<sim.count){sim.vx[o.i]=o.vx*.25;sim.vy[o.i]=o.vy*.25;}};
   this.orbs=this.orbs.filter(o=>{if(o.i===undefined||o.i<0||o.i>=sim.count)return false;o.life-=dt;o.x=((o.x+o.vx*dt)%W+W)%W;o.y=((o.y+o.vy*dt)%H+H)%H;
    sim.x[o.i]=o.x;sim.y[o.i]=o.y;sim.vx[o.i]=o.vx;sim.vy[o.i]=o.vy;if(o.life<=0){release(o);return false;}flying.add(o.i);
-   for(const t of orgs){if(t.dead||t.id===o.owner||(o.clan&&t.clan===o.clan)||(t.stats.faction===o.faction&&(this.factionShare?.[o.faction]||0)<=.6))continue;const dx=wrappedDelta(t.body.x-o.x,W),dy=wrappedDelta(t.body.y-o.y,H),d=Math.hypot(dx,dy);
+   const source=orgs.find(a=>a.id===o.owner);
+   for(const t of orgs){if(t.dead||t.id===o.owner||(source?!this.hostile(source,t):(o.clan&&t.clan===o.clan)||t.stats.faction===o.faction))continue;const dx=wrappedDelta(t.body.x-o.x,W),dy=wrappedDelta(t.body.y-o.y,H),d=Math.hypot(dx,dy);
     if(d<t.stats.radius+4){const owner=orgs.find(a=>a.id===o.owner)||null,n=Math.hypot(o.vx,o.vy)||1;this.damage(owner,t,o.damage*typeMultiplier(o.faction,t.stats.faction),sim,walkers,fish,[o.vx/n,o.vy/n],'orb');release(o);flying.delete(o.i);return false;}}
    return true;});
   if(flying.size)sim.bonds=sim.bonds.filter(b=>{if(flying.has(b[0])||flying.has(b[1])){sim.dropBond(b);return false;}return true;});

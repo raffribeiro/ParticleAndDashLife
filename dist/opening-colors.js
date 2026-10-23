@@ -1,4 +1,4 @@
-import {ROLES,srgbToOklch,oklchToSrgb,mixOklab} from './color.js?v=1.28.1';
+import {ROLES,srgbToOklch,oklchToSrgb,mixOklab} from './color.js?v=1.29.0';
 // ColorAtlas splash hues, raised to particle lightness/chroma for a luminous opening.
 const atlas=[[.101508,.077805,.172419],[.020028,.113590,.186532],[0,.143670,.140297],[.064635,.150568,.066073],[.165163,.136417,.012548],[.232732,.118211,.155307]];
 export const ATLAS_OPENING_COLORS=atlas.map((rgb,i)=>oklchToSrgb(ROLES[i].L,ROLES[i].C,srgbToOklch(rgb)[2]));

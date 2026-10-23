@@ -10,7 +10,7 @@ A interface começa oculta. Pressione **F** para mostrar ou esconder os controle
 
 ## Ecossistema
 
-Corpos independentes mantêm coesão própria e espaço para disputar território. Quando há poucas criaturas, matéria livre próxima pode se organizar em novas colônias, sem criar partículas extras. Seis regiões de alimento distribuídas pelo cenário sustentam corpos maiores; fome e combate ainda podem fragmentá-los. Colossos alimentados podem chegar a 24 pontos no corpo. Aglomerações de matéria livre continuam possíveis.
+Corpos independentes mantêm coesão própria e espaço para disputar território. Quando há poucas criaturas, matéria livre próxima pode se organizar em novas colônias, sem criar partículas extras. Seis regiões de alimento distribuídas pelo cenário sustentam corpos maiores; fome e combate ainda podem fragmentá-los. Colossos alimentados podem chegar a 24 pontos no corpo. Aglomerações de matéria livre continuam possíveis. Vizinhos do mesmo tipo podem iniciar rivalidades curtas, com pausas entre disputas; parentes do mesmo clã continuam aliados.
 
 ## Executar localmente
 
