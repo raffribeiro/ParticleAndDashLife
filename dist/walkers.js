@@ -1,11 +1,11 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.27.5';
-import {featureLevel} from './features.js?v=1.27.5';
-import {factionOf} from './combat.js?v=1.27.5';
+import {stepSoftStrand} from './soft-strand.js?v=1.28.0';
+import {featureLevel} from './features.js?v=1.28.0';
+import {factionOf,FACTION_OF} from './combat.js?v=1.28.0';
 // Walkers: bonded particle clusters that grow line legs and walk.
 // Every FORM_EVERY steps, connected bond components of ≥3 particles may become walkers.
 // Legs hang from the cluster's outer particles (2-bone IK), step in alternating groups,
 // and push the cluster during each stride. Anatomy fades as its connected body falls apart.
-import {wrappedDelta} from './simulation.js?v=1.27.5';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.28.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Size sets the general speed (small = fast, big = slow); the pace gene adds individual variation on top.
 export const sizePace=n=>Math.max(.3,Math.min(1.3,Math.pow(4/Math.max(1,n),.65)));
@@ -61,23 +61,21 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
  partition(comp,sim){
   const f=factionOf(sim,comp);
   if(f===this.blockedFaction)return [];
-  if(f===1)return comp.length>=4?[comp.slice(0,14)]:[];
-  const size=f===0?4:8,set=new Set(comp),adj=new Map(comp.map(i=>[i,[]]));
+  const size=f===1?14:f===0?4:8,set=new Set(comp),adj=new Map(comp.map(i=>[i,[]]));
   for(const [a,b] of sim.bonds)if(set.has(a)&&set.has(b)){adj.get(a).push(b);adj.get(b).push(a);}
   const free=new Set(comp),parts=[];
   for(const seed of comp){if(!free.has(seed))continue;const part=[seed],queue=[seed];free.delete(seed);
    while(queue.length&&part.length<size){const i=queue.shift();for(const j of adj.get(i)){if(!free.has(j)||part.length>=size)continue;free.delete(j);part.push(j);queue.push(j);}}
-   if(part.length>=3)parts.push(part);else for(const i of part)free.add(i);}
+   if(part.length>=(f===1?4:3))parts.push(part);else for(const i of part)free.add(i);}
   if(parts.length>1){const owner=new Map();parts.forEach((p,k)=>p.forEach(i=>owner.set(i,k)));
    sim.bonds=sim.bonds.filter(b=>{const oa=owner.get(b[0]),ob=owner.get(b[1]);if(oa!==undefined&&ob!==undefined&&oa!==ob){sim.dropBond(b);return false;}return true;});}
   return parts;
  }
- // Large bodies (≥ 8 circles) shed their secondary (small) circles; the bigger the body and the smaller the circle,
- // the sooner it falls off. Shed circles become free food for small organisms.
+ // Fed bodies retain their mass. Starvation or growth beyond their comfortable size sheds weak outer matter.
  shed(w,sim,dt=1){
-  const n=w.members.length;if(n<8||!sim.minor)return;const hips=new Set((w.legs||[]).map(l=>l.hip));
+  const n=w.members.length,healthy=(w.needs?.reserve??.75)>.15&&(w.needs?.health??1)>.35,threshold=healthy?((w.faction??factionOf(sim,w.members))===1?20:12):7;if(n<=threshold||!sim.minor)return;const hips=new Set((w.legs||[]).map(l=>l.hip));
   for(const i of [...w.members]){if(w.members.length<=6)break;const m=sim.minor[i];if(!m||hips.has(i))continue;
-   const scale=.1+.4*(m-1)/39;if(this.rng()>=.0025*(n-7)*(1.7-2*scale)*dt)continue;
+   const scale=.1+.4*(m-1)/39;if(this.rng()>=.0025*(n-threshold)*(1.7-2*scale)*dt)continue;
    sim.bonds=sim.bonds.filter(b=>{if(b[0]===i||b[1]===i){sim.dropBond(b);return false;}return true;});
    w.members=w.members.filter(k=>k!==i);w.body?.slots?.delete(i);if(sim.owner&&i<sim.owner.length)sim.owner[i]=0;
    const [cx,cy]=this.centroid(sim,w.members);let dx=wrappedDelta(sim.x[i]-cx,sim.width),dy=wrappedDelta(sim.y[i]-cy,sim.height),d=Math.hypot(dx,dy)||1;
@@ -120,6 +118,32 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
    for(const i of part){const a=this.rng()*Math.PI*2;sim.vx[i]+=Math.cos(a)*1.2;sim.vy[i]+=Math.sin(a)*1.2;}}
   this.fragments=(this.fragments||0)+1;const [x,y]=this.centroid(sim,w.members);this.events.push({kind:'break',x,y,species:sim.type[w.members[0]]});
   return pieces;
+ }
+ // Low diversity encourages new bodies to assemble from local free matter; no births or teleports.
+ seedColony(sim){
+  if(this.list.length>=Math.max(1,this.max-2))return null;
+  const owned=new Set(this.list.flatMap(w=>w.members)),flying=new Set((this.thrown||[]).map(o=>o.i)),free=[];
+  for(let i=0;i<sim.count;i++)if(!owned.has(i)&&!flying.has(i))free.push(i);
+  if(free.length<8)return null;
+  let best=null,bestScore=-Infinity;
+  for(let k=0;k<Math.min(24,free.length);k++){
+   const seed=free[(Math.floor(this.rng()*free.length)+k*17)%free.length],type=sim.type[seed],f=FACTION_OF[type];
+   const near=free.filter(i=>sim.type[i]===type&&Math.hypot(wrappedDelta(sim.x[i]-sim.x[seed],sim.width),wrappedDelta(sim.y[i]-sim.y[seed],sim.height))<100);
+   if(near.length<8)continue;
+   const target=[8,14,10][f],group=[seed],edges=[],degrees=new Map([[seed,0]]),remaining=new Set(near.filter(i=>i!==seed));
+   while(group.length<target&&remaining.size){let pair=null,distance=Math.min(60,sim.radius*.4);
+    for(const a of group){if(degrees.get(a)>=VALENCE[type])continue;for(const b of remaining){const d=Math.hypot(wrappedDelta(sim.x[b]-sim.x[a],sim.width),wrappedDelta(sim.y[b]-sim.y[a],sim.height));if(d<distance){distance=d;pair=[a,b];}}}
+    if(!pair)break;const [a,b]=pair;group.push(b);remaining.delete(b);degrees.set(a,degrees.get(a)+1);degrees.set(b,1);edges.push(pair);
+   }
+   if(group.length<8)continue;
+   const nearest=Math.min(240,...this.list.map(w=>{const [x,y]=this.centroid(sim,w.members);return Math.hypot(wrappedDelta(x-sim.x[seed],sim.width),wrappedDelta(y-sim.y[seed],sim.height));}));
+   const same=this.list.filter(w=>(w.faction??factionOf(sim,w.members))===f).length,score=group.length+nearest/25-same*4;
+   if(score>bestScore){best={group,edges,f};bestScore=score;}
+  }
+  if(!best)return null;
+  const ids=new Set(best.group);sim.bonds=sim.bonds.filter(b=>{if(ids.has(b[0])||ids.has(b[1])){sim.dropBond(b);return false;}return true;});
+  for(const [a,b] of best.edges){sim.bonds.push([a,b]);sim.bondCount[a]++;sim.bondCount[b]++;sim.bondKeys.add(Math.min(a,b)*65536+Math.max(a,b));}
+  const w=this.create(sim,best.group);w.faction=best.f;return w;
  }
  create(sim,members){
   const [cx,cy]=this.centroid(sim,members),rng=this.rng;
@@ -199,7 +223,11 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   // Form new walkers from bonded clusters.
   if(this.tick%FORM_EVERY===0&&this.list.length<Math.max(1,this.max-2)&&sim.bonds?.length){
    const taken=new Set();for(const w of this.list)for(const i of w.members)taken.add(i);
-   for(const comp of components(sim.count,sim.bonds)){if(this.list.length>=Math.max(1,this.max-2))break;if(comp.length<3||comp.some(i=>taken.has(i)))continue;if(this.rng()<(this.formChance??.6))for(const part of this.partition(comp,sim)){if(this.list.length>=Math.max(1,this.max-2))break;const w=this.create(sim,part);w.faction=factionOf(sim,part);}}
+   const freeBonds=sim.bonds.filter(([a,b])=>!taken.has(a)&&!taken.has(b));
+   for(const comp of components(sim.count,freeBonds)){if(this.list.length>=Math.max(1,this.max-2))break;if(comp.length<3)continue;if(this.rng()<(this.formChance??.6))for(const part of this.partition(comp,sim)){if(this.list.length>=Math.max(1,this.max-2))break;const w=this.create(sim,part);w.faction=factionOf(sim,part);for(const i of part)sim.owner[i]=w.id+1;}}
+  }
+  if(this.tick%180===0){const target=Math.min(Math.max(1,this.max-2),Math.max(3,Math.floor(sim.count/60))),large=this.list.filter(w=>w.members.length>=8).length;
+   if(this.list.length<target||large<Math.min(4,Math.ceil(target/2)))this.seedColony(sim);
   }
   if(fish){
    const live=new Set(this.list.map(w=>w.id));

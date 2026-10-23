@@ -4,7 +4,7 @@ import {Simulation} from '../dist/simulation.js';
 const world=()=>new Simulation(30,800,600,()=>.5);
 const animal=(id=1)=>({id,members:[0,1,2],age:100,heading:0,body:{x:400,y:300},cohesion:1});
 test('personalities are stable and varied',()=>{assert.deepEqual(personalityFor(3),personalityFor(3));assert.ok(new Set(Array.from({length:12},(_,i)=>personalityFor(i).name)).size>=3);});
-test('environment currents and food remain bounded and preserve population',()=>{const e=new Ecology(),s=world(),n=s.count;for(let k=0;k<100;k++)e.step(s,[],[],null,1);assert.equal(s.count,n);assert.ok(s.energy.every(x=>x<=2));assert.ok(s.vx.every(Number.isFinite));assert.equal(e.patches.length,3);});
+test('environment currents and food remain bounded and preserve population',()=>{const e=new Ecology(),s=world(),n=s.count;for(let k=0;k<100;k++)e.step(s,[],[],null,1);assert.equal(s.count,n);assert.ok(s.energy.every(x=>x<=2));assert.ok(s.vx.every(Number.isFinite));assert.equal(e.patches.length,6);});
 test('rest wakes for a nearby cursor and gaze precedes pursuit',()=>{const e=new Ecology(),s=world(),a=animal();e.step(s,[],[a],null,1);a.behavior.restUntil=e.time+100;e.step(s,[],[a],null,1);assert.ok(a.behavior.resting);e.step(s,[],[a],{x:420,y:300,force:0},1);assert.equal(a.behavior.resting,false);assert.ok(Number.isFinite(a.behavior.gaze));});
 test('partner memory expires and age markings grow',()=>{const e=new Ecology(),s=world(),f={id:1,x:[400],y:[300],age:100,lifespan:1000,heading:0,memory:{ticks:2,clan:'a',partners:[]}};e.step(s,[f],[],null,1);e.step(s,[f],[],null,1);assert.equal(f.memory,null);assert.ok(f.behavior.maturity>0);});
 import {Walkers} from '../dist/walkers.js';
@@ -25,7 +25,7 @@ test('integrated ecology preserves biomass through rest, life cycles and formati
   assert.ok(s.x.every(Number.isFinite));assert.ok(cs.list.every(c=>c.x.every(Number.isFinite)));
   rested ||= cs.list.some(c=>c.behavior?.resting);memory ||=cs.list.some(c=>c.memory);
   cs.events=[];ws.events=[];
- }assert.ok(rested);assert.ok(e.patches.length===3);
+ }assert.ok(rested);assert.ok(e.patches.length===6);
 });
 test('a mounted tail improves the turn response of the body',()=>{
  const run=tail=>{const s=world(),ws=new Walkers(()=>.5),a=ws.create(s,[0,1,2]);a.materialParts=true;a.heading=0;ws.fish=tail?[{attachment:{walker:a.id,role:'tail'}}]:[];ws.updateBody(a,s,1);for(const i of a.members)s.y[i]+=3;ws.updateBody(a,s,1);return a.body.heading;};assert.ok(run(true)>run(false));
@@ -43,6 +43,10 @@ test('well-fed grown prey lose less energy to the same attack',()=>{
  assert.ok(attack(1)<attack(0)*.7);
 });
 test('hungry creatures wake and replenish reserves inside nutrient patches',()=>{
- const s=world(),e=new Ecology(),a=animal(2);a.body={x:144,y:300};e.ensure(a);a.behavior.restUntil=1000;a.needs={reserve:.05,health:.5,hunger:.95,resistance:1};
+ const s=world(),e=new Ecology(),a=animal(2);e.step(s,[],[],null,0);a.body={x:e.patches[0].x,y:e.patches[0].y};e.ensure(a);a.behavior.restUntil=1000;a.needs={reserve:.05,health:.5,hunger:.95,resistance:1};
  e.step(s,[],[a],null,1);assert.equal(a.behavior.resting,false);assert.ok(a.needs.reserve>.05);assert.ok(a.growth>0);
 });
+
+test('large independent bodies push apart even when their centres coincide',()=>{const s=world(),e=new Ecology(),a=animal(1),b={...animal(2),members:[3,4,5]};a.body.length=b.body.length=55;a.traits=b.traits={hunt:0,escape:0,fecundity:1};s.vx.fill(0);s.vy.fill(0);e.step(s,[],[a,b],null);assert.ok(Math.hypot(s.vx[0]-s.vx[3],s.vy[0]-s.vy[3])>.1);});
+
+test('nutrient patches support several distinct territories across both halves of the scene',()=>{const s=world(),e=new Ecology();e.step(s,[],[],null,0);assert.equal(e.patches.length,6);assert.ok(Math.max(...e.patches.map(p=>p.x))-Math.min(...e.patches.map(p=>p.x))>s.width*.5);assert.ok(e.patches.filter(p=>p.y<s.height/2).length>=2);assert.ok(e.patches.filter(p=>p.y>s.height/2).length>=2);});

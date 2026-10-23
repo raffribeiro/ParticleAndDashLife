@@ -8,6 +8,10 @@ Um ecossistema visual interativo de partículas e criaturas, com alimentação, 
 
 A interface começa oculta. Pressione **F** para mostrar ou esconder os controles. Em telas de toque, use “Mostrar controles”. Duplo clique na cena alterna tela cheia. Clique em **Start Simulation** para iniciar o charge e a explosão. Espaço pausa; clicar na cena cria um distúrbio local e arrastar uma criatura move seu corpo e as partes ligadas a ele. Soltar uma criatura não dispara outro distúrbio.
 
+## Ecossistema
+
+Corpos independentes mantêm coesão própria e espaço para disputar território. Quando há poucas criaturas, matéria livre próxima pode se organizar em novas colônias, sem criar partículas extras. Seis regiões de alimento distribuídas pelo cenário sustentam corpos maiores; fome e combate ainda podem fragmentá-los. Colossos alimentados podem chegar a 24 pontos no corpo. Aglomerações de matéria livre continuam possíveis.
+
 ## Executar localmente
 
 Requer Python 3 e, para testes, Node.js.

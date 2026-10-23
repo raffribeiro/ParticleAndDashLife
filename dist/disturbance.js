@@ -1,4 +1,4 @@
-import {wrappedDelta} from './simulation.js?v=1.27.5';
+import {wrappedDelta} from './simulation.js?v=1.28.0';
 export class Disturbances {
  constructor(){this.enabled=true;this.interval=5;this.strength=1.5;this.elapsed=0;this.count=0;this.wave=null;}
  configure(options){if(!options)return;this.pulseOnly=!!options.pulseOnly;this.enabled=!!options.enabled;this.interval=Math.max(5,Math.min(120,Number(options.interval)||5));this.strength=Math.max(.1,Math.min(1.5,Number(options.strength)||1.5));this.elapsed=Math.min(this.elapsed,this.interval);}

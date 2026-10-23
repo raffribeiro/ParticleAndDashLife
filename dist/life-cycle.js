@@ -1,15 +1,16 @@
-import {inheritFeatures} from './features.js?v=1.27.5';
-import {ensureNeeds} from './needs.js?v=1.27.5';
-import {VALENCE,wrappedDelta} from './simulation.js?v=1.27.5';
-import {inheritTraits,reproductionRules} from './traits.js?v=1.27.5';
-import {createFish} from './creatures.js?v=1.27.5';
-import {SPECIES_PATTERN} from './simulation.js?v=1.27.5';
+import {FACTION_CAP,factionOf} from './combat.js?v=1.28.0';
+import {inheritFeatures} from './features.js?v=1.28.0';
+import {ensureNeeds} from './needs.js?v=1.28.0';
+import {VALENCE,wrappedDelta} from './simulation.js?v=1.28.0';
+import {inheritTraits,reproductionRules} from './traits.js?v=1.28.0';
+import {createFish} from './creatures.js?v=1.28.0';
+import {SPECIES_PATTERN} from './simulation.js?v=1.28.0';
 export class LifeCycle{
  constructor(target=300){this.target=target;this.tick=0;this.births=0;this.catches=0;}
  total(sim,creatures){return sim.count+creatures.list.reduce((n,c)=>n+4+c.stomach.length,0);}
  grow(a,sim,walkers){
   // Hunters grow when fed; the Colosso faction always grows toward big bodies.
-  if(((a.traits?.hunt||0)<.5||(a.growth||0)<.15)&&a.faction!==1||a.members.length>=14)return false;
+  if(((a.traits?.hunt||0)<.5||(a.growth||0)<.15)&&a.faction!==1||a.members.length>=FACTION_CAP[a.faction??factionOf(sim,a.members)])return false;
   const owned=new Set(walkers.list.flatMap(w=>w.members)),[cx,cy]=walkers.centroid(sim,a.members);let pair=null,best=45;
   for(let i=0;i<sim.count;i++){if(owned.has(i)||sim.bondCount[i]>=VALENCE[sim.type[i]])continue;const d=Math.hypot(wrappedDelta(sim.x[i]-cx,sim.width),wrappedDelta(sim.y[i]-cy,sim.height));if(d>=best)continue;
    for(const j of a.members){if(sim.bondCount[j]>=VALENCE[sim.type[j]]||sim.matrix[sim.type[i]][sim.type[j]]<0||sim.matrix[sim.type[j]][sim.type[i]]<0||sim.bondKeys.has(Math.min(i,j)*65536+Math.max(i,j))||Math.hypot(wrappedDelta(sim.x[i]-sim.x[j],sim.width),wrappedDelta(sim.y[i]-sim.y[j],sim.height))>sim.radius*.45)continue;pair=[j,i];best=d;break;}

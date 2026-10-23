@@ -1,4 +1,4 @@
-import {DEFAULT_PALETTE} from './color.js?v=1.27.5';
+import {DEFAULT_PALETTE} from './color.js?v=1.28.0';
 // 60-30-10: species 0–1 30% each, 2–3 15% each, 4–5 5% each (deterministic interleave).
 export const SPECIES_PATTERN=[0,1,2,3,4,5,0,1,0,1,2,3,0,1,0,1,2,3,0,1];
 // Species colours come from a harmonic OKLCH palette; mutated in place when the palette changes.
@@ -66,7 +66,7 @@ export class Simulation{
   for(const b of this.bonds){const [a,c]=b;const dx=wrappedDelta(x[c]-x[a],w),dy=wrappedDelta(y[c]-y[a],h),d=Math.hypot(dx,dy)||1e-6;
    const body=this.bodyBondKeys?.has(Math.min(a,c)*65536+Math.max(a,c));
    // Secondary (half-size) particles hold weaker bonds: half the spring, shorter reach, break 3× more often.
-   const weak=minor&&(minor[a]||minor[c]);
+   const weak=!body&&minor&&(minor[a]||minor[c]);
    // Weak bonds lose more in larger clusters: +12% softer spring and +25% break rate per circle beyond 3.
    const extra=weak&&comp?Math.max(0,comp(a)-3):0,soft=weak?.5/(1+extra*.12):1,reach=weak?.75/(1+extra*.04):1,fragile=weak?3*(1+extra*.25):1;
    if(d>breakD*(body?1.4:1)*reach||M[t[a]][t[c]]<(body?-.35:0)||M[t[c]][t[a]]<(body?-.35:0)||this.rng()<(body?.00005:.0003)*fragile*dt){this.dropBond(b);continue;}
@@ -95,7 +95,7 @@ export class Simulation{
   });
  }
  const x=this.x,y=this.y,vx=this.vx,vy=this.vy,types=this.type,energy=this.energy,cooldown=this.feedCooldown;
- const fx=this.forceX,fy=this.forceY,densities=this.densities;
+ const fx=this.forceX,fy=this.forceY,densities=this.densities,owners=this.ownerX===this.x?this.owner:null;
  fx.fill(0);fy.fill(0);densities.fill(0);
  for(let i=0;i<n;i++){
   const c=Math.min(cols-1,Math.floor(x[i]/cw))+Math.min(rows-1,Math.floor(y[i]/ch))*cols;
@@ -129,6 +129,8 @@ export class Simulation{
     let forceA,forceB;
     if(q<.22){forceA=forceB=(q/.22-1)*invD;}
     else{const shape=(1-Math.abs(2*(q-.22)/.78-1))*invD;forceA=rule[types[j]]*shape;forceB=this.matrix[types[j]][ti]*shape;}
+    // Independent bodies keep their own cohesion; long-range particle affinity must not glue them together.
+    if(owners&&owners[i]!==owners[j]&&(owners[i]||owners[j])){const affinity=owners[i]&&owners[j] ? .06 : .3;if(forceA>0)forceA*=affinity;if(forceB>0)forceB*=affinity;}
     ax+=forceA*dx;ay+=forceA*dy;fx[j]-=forceB*dx;fy[j]-=forceB*dy;
     if(d<r*.6){const weight=1-d*invDensityRadius;density+=weight;densities[j]+=weight;}
     if(bonding&&d<bondR&&bondCount[i]<VALENCE[ti]&&bondCount[j]<VALENCE[types[j]]&&rule[types[j]]>.2&&this.matrix[types[j]][ti]>.2)candidates.push(i,j);

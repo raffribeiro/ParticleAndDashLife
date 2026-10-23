@@ -1,7 +1,7 @@
-import {featureLevel} from './features.js?v=1.27.5';
-import {ensureNeeds,nourish,metabolize,damageFactor} from './needs.js?v=1.27.5';
-import {ensureTraits} from './traits.js?v=1.27.5';
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.27.5';
+import {featureLevel} from './features.js?v=1.28.0';
+import {ensureNeeds,nourish,metabolize,damageFactor} from './needs.js?v=1.28.0';
+import {ensureTraits} from './traits.js?v=1.28.0';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.28.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const NAMES=['curioso','tímido','territorial','sociável'];
 export function personalityFor(id){const h=((id+1)*2654435761)>>>0;return {name:NAMES[h%4],speed:.75+(h%101)/200,curiosity:(h%4)===1?-.85:.4+(h%31)/50};}
@@ -33,7 +33,7 @@ export class Ecology{
  }
  step(sim,fish,animals,cursor,dt=1,walkers=null){
   this.time+=dt;const W=sim.width,H=sim.height,t=this.time/60;
-  this.patches=Array.from({length:3},(_,k)=>({x:(.18+k*.31+.04*Math.sin(t*.035+k))*W,y:(.5+.27*Math.sin(k*2+t*.022))*H,radius:Math.max(70,Math.min(W,H)*.18),species:k*2}));
+  this.patches=Array.from({length:6},(_,k)=>({x:(.16+(k%3)*.34+.035*Math.sin(t*.035+k))*W,y:(.28+Math.floor(k/3)*.44+.09*Math.sin(k*2+t*.022))*H,radius:Math.max(70,Math.min(W,H)*.2),species:k}));
   for(let i=0;i<sim.count;i++){
    let food=0,fx=0,fy=0;
    for(const p of this.patches){const dx=wrappedDelta(sim.x[i]-p.x,W),dy=wrappedDelta(sim.y[i]-p.y,H),d=Math.hypot(dx,dy),q=Math.max(0,1-d/p.radius);food+=q*q;fx-=dy/(d||1)*q*.004;fy+=dx/(d||1)*q*.004;}
@@ -57,7 +57,7 @@ export class Ecology{
      const friends=a.memory.partners.map(id=>peers.get(id)).filter(c=>c&&!c.dead);
      for(const c of friends.slice(0,4)){const dx=wrappedDelta(c.x[0]-x,W),dy=wrappedDelta(c.y[0]-y,H),length=Math.hypot(dx,dy);if(length>25&&length<200){b.steerX+=dx/length*.008;b.steerY+=dy/length*.008;}}
     }}
-    if(a.energy<.8){const p=this.patches[(a.species||0)%3],dx=wrappedDelta(p.x-x,W),dy=wrappedDelta(p.y-y,H),length=Math.hypot(dx,dy)||1;b.steerX+=dx/length*.016;b.steerY+=dy/length*.016;}
+    if(a.energy<.8){const p=this.patches[(a.species||0)%this.patches.length],dx=wrappedDelta(p.x-x,W),dy=wrappedDelta(p.y-y,H),length=Math.hypot(dx,dy)||1;b.steerX+=dx/length*.016;b.steerY+=dy/length*.016;}
    }else{
     let nourishment=0;for(const p of this.patches){const distance=Math.hypot(wrappedDelta(p.x-x,W),wrappedDelta(p.y-y,H));nourishment+=Math.max(0,1-distance/p.radius);}
     a.fertility=Math.min(2,(a.fertility||0)+nourishment*.0015*dt);
@@ -65,7 +65,10 @@ export class Ecology{
     if(needs.hunger>.55){b.restUntil=0;b.resting=false;b.activity=Math.max(b.activity,1);}
     if(needs.health<.15)a.cohesion=Math.max(0,a.cohesion-.015*dt);
     let energy=0;for(const i of a.members)energy+=sim.energy[i];if(energy/a.members.length<.9||needs.hunger>.35){const p=this.patches.reduce((best,p)=>Math.hypot(wrappedDelta(p.x-x,W),wrappedDelta(p.y-y,H))<Math.hypot(wrappedDelta(best.x-x,W),wrappedDelta(best.y-y,H))?p:best),dx=wrappedDelta(p.x-x,W),dy=wrappedDelta(p.y-y,H),length=Math.hypot(dx,dy)||1;b.steerX+=dx/length*(.014+needs.hunger*.035);b.steerY+=dy/length*(.014+needs.hunger*.035);}
-    for(const other of animals){if(other===a||!other.body)continue;const dx=wrappedDelta(other.body.x-x,W),dy=wrappedDelta(other.body.y-y,H),length=Math.hypot(dx,dy)||1;
+    for(const other of animals){if(other===a||!other.body)continue;let dx=wrappedDelta(other.body.x-x,W),dy=wrappedDelta(other.body.y-y,H),length=Math.hypot(dx,dy);
+     if(length<.001){const phase=Math.min(a.id,other.id)*2.39996+Math.max(a.id,other.id);dx=Math.cos(phase)*(a.id<other.id?1:-1);dy=Math.sin(phase)*(a.id<other.id?1:-1);length=1;}
+     const clearance=(a.body?.length??20)*.45+(other.body.length??20)*.45+12;
+     if(length<clearance){const pressure=.18*(1-length/clearance);b.steerX-=dx/length*pressure;b.steerY-=dy/length*pressure;}
      if(length<140){const friendly=b.name==='sociável'||a.clan&&a.clan===other.clan,force=friendly?(length>45?.012:-.008):-.018;b.steerX+=dx/length*force;b.steerY+=dy/length*force;}
     }
     const traits=ensureTraits(a);b.profile=traits.hunt>=.5?'caçador':'evasivo';

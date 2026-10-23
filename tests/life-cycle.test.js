@@ -9,3 +9,5 @@ test('repeated reproductive cycles keep the population within its budget',()=>{
  assert.ok(life.births>=2);assert.ok(c.list.length<=c.target+2);
 });
 test('a grown hunter incorporates nearby compatible particles without spawning mass',()=>{const {s,w,c,a}=setup(),life=new LifeCycle(100);a.traits={hunt:.8,escape:.2,fecundity:.2};a.growth=.3;s.matrix=s.matrix.map(r=>r.map(()=>.8));const before=s.count;assert.ok(life.grow(a,s,w));assert.equal(a.members.length,4);assert.equal(s.count,before);});
+
+test('fed colossi can grow beyond fourteen members but keep a bounded mass',()=>{const {s,w,a}=setup(),life=new LifeCycle(100);s.type.fill(1);s.matrix=s.matrix.map(r=>r.map(()=>.8));a.faction=1;const count=s.count;while(life.grow(a,s,w)){}assert.equal(a.members.length,24);assert.equal(new Set(a.members).size,24);assert.equal(s.count,count);});
