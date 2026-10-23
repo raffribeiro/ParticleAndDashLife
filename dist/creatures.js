@@ -1,4 +1,4 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.27.1';
+import {stepSoftStrand} from './soft-strand.js?v=1.27.2';
 // Procedural fish drawn as literal rectangles: kinematic spines (follow-the-leader with bend limits) steered by
 // explicit world rules. Every rule reads the same world the particles live in:
 //  1 hunger    – seek the prey particle species (same food chain as particles)
@@ -16,8 +16,8 @@ import {stepSoftStrand} from './soft-strand.js?v=1.27.1';
 //                into particles; clustered same-species particles condense into new fish, keeping
 //                the fish count around the target. Biomass (free particles + PER_FISH per fish +
 //                stomach contents) is conserved.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.27.1';
-import {SPECIES_SHARE} from './color.js?v=1.27.1';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.27.2';
+import {SPECIES_SHARE} from './color.js?v=1.27.2';
 export const PER_FISH=4,STOMACH=3,MIN_FREE=40;
 export const SIZE=1.15;
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -230,7 +230,7 @@ export class Creatures {
   return this.list.map(c=>{
    const n=c.x.length,points=new Float32Array(n*2);for(let i=0;i<n;i++){points[i*2]=c.x[i];points[i*2+1]=c.y[i];}
    const b=c.attachment?c.organism:c.behavior;
-   return {id:c.id,maturity:b?.maturity??0,personality:b?.name,resting:!!b?.resting,gaze:b?.gaze,role:c.attachment?.role,stretch:c.attachment?.role==='leg'?(c.legStretch||1):1,kind:'rectangle',style:c.style,species:c.species,energy:c.energy,phase:c.phase,heading:c.heading,hunting:c.hunting,fleeing:c.fleeing,burst:c.burst,points,widths:c.widths,tail:c.tail,fin:c.fin,pattern:c.pattern,life:Math.min(1,c.age/60,(c.lifespan-c.age)/90),mood:c.mood??-1,stomach:c.stomach.map(item=>item.type)};
+   return {id:c.id,maturity:b?.maturity??0,personality:b?.name,resting:!!b?.resting,gaze:b?.gaze,role:c.attachment?.role,stretch:c.attachment?.role==='leg'?(c.legStretch||1):1,kind:'rectangle',style:c.style,species:c.species,energy:c.energy,phase:c.phase,heading:c.heading,hunting:c.hunting,fleeing:c.fleeing,burst:c.burst,points,widths:c.widths,tail:c.tail,fin:c.fin,pattern:c.pattern,life:Math.min(1,c.age/60),mood:c.mood??-1,stomach:c.stomach.map(item=>item.type)};
   });
  }
 }

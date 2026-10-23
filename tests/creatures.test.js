@@ -56,3 +56,5 @@ test('released fish drift from their current pose without swimming toward the fo
  for(let k=0;k<60;k++){const x=c.x[0],y=c.y[0];cs.update(c,s,null);assert.ok(c.x[0]>x&&c.x[0]-x<=.8+1e-6);assert.ok(c.y[0]>=y&&c.y[0]-y<=.1+1e-6);}
  assert.equal(c.release,null);assert.ok(c.x[0]>440&&c.x[0]<448);assert.equal(c.legJoints,null);
 });
+
+test('living strokes keep their adult opacity until death, including attached body parts',()=>{const c=new Creatures(1),f=fishAt('rect',100,100,0,1);c.list=[f];f.age=15;assert.equal(c.serialize()[0].life,.25);f.age=60;const adult=c.serialize()[0].life;assert.equal(adult,1);for(const role of [null,'leg','tail']){f.attachment=role?{role}:null;f.age=f.lifespan-1;assert.equal(c.serialize()[0].life,adult);}});
