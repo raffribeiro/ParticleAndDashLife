@@ -1,7 +1,7 @@
-import {featureLevel} from './features.js?v=1.27.2';
-import {ensureNeeds,nourish,metabolize,damageFactor} from './needs.js?v=1.27.2';
-import {ensureTraits} from './traits.js?v=1.27.2';
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.27.2';
+import {featureLevel} from './features.js?v=1.27.3';
+import {ensureNeeds,nourish,metabolize,damageFactor} from './needs.js?v=1.27.3';
+import {ensureTraits} from './traits.js?v=1.27.3';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.27.3';
 const TAU=Math.PI*2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const NAMES=['curioso','tímido','territorial','sociável'];
 export function personalityFor(id){const h=((id+1)*2654435761)>>>0;return {name:NAMES[h%4],speed:.75+(h%101)/200,curiosity:(h%4)===1?-.85:.4+(h%31)/50};}

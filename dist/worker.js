@@ -1,19 +1,20 @@
-import {SceneInteraction} from './scene-interaction.js?v=1.27.2';
+import {resizeWorld} from './world-resize.js?v=1.27.3';
+import {SceneInteraction} from './scene-interaction.js?v=1.27.3';
 const interaction=new SceneInteraction();
-import {BigBang} from './big-bang.js?v=1.27.2';
+import {BigBang} from './big-bang.js?v=1.27.3';
 let opening=null,awaitingFrame=false;
-import {LifeCycle} from './life-cycle.js?v=1.27.2';
+import {LifeCycle} from './life-cycle.js?v=1.27.3';
 let life=new LifeCycle();
-import {BehaviorCycle} from './behavior-cycle.js?v=1.27.2';
+import {BehaviorCycle} from './behavior-cycle.js?v=1.27.3';
 const behaviorCycle=new BehaviorCycle();let matrixRevision=-1;
-import {Ecology} from './ecology.js?v=1.27.2';
+import {Ecology} from './ecology.js?v=1.27.3';
 const ecology=new Ecology();
-import {Disturbances} from './disturbance.js?v=1.27.2';
+import {Disturbances} from './disturbance.js?v=1.27.3';
 const disturbances=new Disturbances();let pendingEvent=null;
-import {Simulation} from './simulation.js?v=1.27.2';
-import {Creatures} from './creatures.js?v=1.27.2';
-import {Walkers} from './walkers.js?v=1.27.2';
-import {Combat} from './combat.js?v=1.27.2';
+import {Simulation} from './simulation.js?v=1.27.3';
+import {Creatures} from './creatures.js?v=1.27.3';
+import {Walkers} from './walkers.js?v=1.27.3';
+import {Combat} from './combat.js?v=1.27.3';
 const combat=new Combat();let lastPublish=0;
 const walkers=new Walkers();
 const creatures=new Creatures((Math.random()*2**32)>>>0);
@@ -38,5 +39,5 @@ globalThis.onmessage=({data:m})=>{if(m.kind==='init'){sim=new Simulation(m.count
   }
   if(paused||m.action!=='move')publish();
  }
- if(m.kind==='config'){const pauseChanged=paused!==m.paused;behaviorCycle.configure(m.behaviorCycle);disturbances.configure(m.disturbance);paused=m.paused;visible=m.visible;if(!visible)interaction.cancel();pointer=m.pointer;if(m.matrixRevision===undefined||m.matrixRevision!==matrixRevision){sim.matrix=m.matrix;matrixRevision=m.matrixRevision;behaviorCycle.manual(m.behaviorKey);}sim.radius=m.radius;sim.force=m.force;sim.ecology=m.ecology;if(m.dynamicMobility!==undefined)sim.dynamicMobility=!!m.dynamicMobility;if(m.inertia!==undefined)sim.setInertia(m.inertia);if(m.bonding!==undefined)sim.bonding=!!m.bonding;walkers.configure(m.walkers);combat.configure(m.combat);if(m.wiggle!==undefined)sim.wiggle=Math.max(0,Math.min(2,+m.wiggle||0));creatures.configure(m.creatures);if(sim.width!==m.width||sim.height!==m.height){creatures.resize(sim.width,sim.height,m.width,m.height);for(let i=0;i<sim.count;i++){sim.x[i]=sim.x[i]/sim.width*m.width;sim.y[i]=sim.y[i]/sim.height*m.height;if(sim.x[i]>=m.width)sim.x[i]=0;if(sim.y[i]>=m.height)sim.y[i]=0;}sim.width=m.width;sim.height=m.height;publish();}if(pauseChanged)publish();}
+ if(m.kind==='config'){const pauseChanged=paused!==m.paused;behaviorCycle.configure(m.behaviorCycle);disturbances.configure(m.disturbance);paused=m.paused;visible=m.visible;if(!visible)interaction.cancel();pointer=m.pointer;if(m.matrixRevision===undefined||m.matrixRevision!==matrixRevision){sim.matrix=m.matrix;matrixRevision=m.matrixRevision;behaviorCycle.manual(m.behaviorKey);}sim.radius=m.radius;sim.force=m.force;sim.ecology=m.ecology;if(m.dynamicMobility!==undefined)sim.dynamicMobility=!!m.dynamicMobility;if(m.inertia!==undefined)sim.setInertia(m.inertia);if(m.bonding!==undefined)sim.bonding=!!m.bonding;walkers.configure(m.walkers);combat.configure(m.combat);if(m.wiggle!==undefined)sim.wiggle=Math.max(0,Math.min(2,+m.wiggle||0));creatures.configure(m.creatures);if(sim.width!==m.width||sim.height!==m.height){interaction.cancel();resizeWorld(sim,creatures,walkers,m.width,m.height);publish();}if(pauseChanged)publish();}
  schedule();};

@@ -1,4 +1,5 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.27.2';
+import {shiftFish} from './body-transform.js?v=1.27.3';
+import {stepSoftStrand} from './soft-strand.js?v=1.27.3';
 // Procedural fish drawn as literal rectangles: kinematic spines (follow-the-leader with bend limits) steered by
 // explicit world rules. Every rule reads the same world the particles live in:
 //  1 hunger    – seek the prey particle species (same food chain as particles)
@@ -16,8 +17,8 @@ import {stepSoftStrand} from './soft-strand.js?v=1.27.2';
 //                into particles; clustered same-species particles condense into new fish, keeping
 //                the fish count around the target. Biomass (free particles + PER_FISH per fish +
 //                stomach contents) is conserved.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.27.2';
-import {SPECIES_SHARE} from './color.js?v=1.27.2';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.27.3';
+import {SPECIES_SHARE} from './color.js?v=1.27.3';
 export const PER_FISH=4,STOMACH=3,MIN_FREE=40;
 export const SIZE=1.15;
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -108,7 +109,7 @@ export class Creatures {
    for(let k=0;k<Math.min(3,deficit);k++){if(this.rng()>chance)continue;const seed=this.randomFree(sim);if(seed>=0&&this.condense(sim,seed,30)){this.births++;const c=this.list.at(-1);(this.events||(this.events=[])).push({kind:'birth',x:c.x[0],y:c.y[0],species:c.species});}}}
  }
  apply(sim){if(this.removed.size||this.added.length)sim.rebuild(this.removed,this.added);this.removed=new Set();this.added=[];}
- resize(oldW,oldH,w,h){for(const c of this.list){shift(c,c.x[0]/oldW*w-c.x[0],c.y[0]/oldH*h-c.y[0]);}}
+ resize(oldW,oldH,w,h){for(const c of this.list){shiftFish(c,c.x[0]/oldW*w-c.x[0],c.y[0]/oldH*h-c.y[0],false);}}
  // Rule 7: a disturbance pulse scares every fish inside its radius.
  scare(x,y,radius,w,h){for(const c of this.list){const dx=wrappedDelta(c.x[0]-x,w),dy=wrappedDelta(c.y[0]-y,h),d=Math.hypot(dx,dy);if(d<radius){c.burst=Math.max(c.burst,25+35*(1-d/radius));c.heading=Math.atan2(dy,dx)+(this.rng()-.5)*.6;c.fleeing=true;this.escapes++;}}}
  update(c,sim,pointer){
