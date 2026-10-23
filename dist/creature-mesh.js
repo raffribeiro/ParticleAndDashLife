@@ -1,5 +1,5 @@
 // Builds procedural creature geometry on the CPU and draws it in one WebGL call.
-// Vertex: x,y | r,g,b,a | u,v,kind. kind 0 membrane strip, 1 soft line, 2 membrane fan, 3 glow dot.
+// Vertex: x,y | r,g,b,a | u,v,kind. kind 0 membrane strip, 1 halo, 2 membrane fan, 3 glow dot, 5 opaque stroke.
 const STRIDE=9;
 const angleBetween=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 function compile(gl,vs,fs,attrs){const p=gl.createProgram();for(const [t,src] of [[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));gl.attachShader(p,s);}attrs.forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));return p;}
@@ -14,6 +14,8 @@ export class CreatureMesh {
    void main(){
     // Agar cells: crisp flat disc (6) and capsule (7), no glow.
     if(sh.z>5.5){float dd=sh.z<6.5?length(sh.xy):abs(sh.y);gl_FragColor=vec4(clamp(tint.rgb,0.,.98),tint.a*(1.-smoothstep(.9,1.,dd)));return;}
+    // Solid strokes: only geometric edge coverage may blend. Life, mood, energy and glow never reduce the fill.
+    if(sh.z>4.5){float edge=1.-smoothstep(.9,1.,abs(sh.y));float shade=.78+.19*(1.-sh.x)+.1*(1.-sh.y*sh.y);gl_FragColor=vec4(clamp(tint.rgb*shade,0.,.98),edge);return;}
     float k=sh.z,d=k<.5||(k>.5&&k<1.5)||k>4.5?abs(sh.y):k>3.5?max(abs(sh.x),abs(sh.y)):length(sh.xy),a;
     if(k<.5||(k>1.5&&k<2.5)){float edge=1.-smoothstep(.82,1.,d);float rim=smoothstep(.5,.96,d);a=edge*(.22+.78*rim*rim);}
     else if(k<1.5)a=1.-smoothstep(.15,1.,d);
@@ -50,14 +52,14 @@ export class CreatureMesh {
   if(state?.walkers)for(const wk of state.walkers){if(wk.materialParts)continue;const sp=P.species[wk.species]||P.species[0],L=wk.legs,life=Math.max(0,Math.min(1,wk.life??1));
    // Line anatomy grows out of the connected particle body.
    const startBody=this.n;
-   if(wk.tail){const n=wk.tail.length/2,X=[],Y=[];for(let i=0;i<n;i++){X.push(wk.tail[i*2]);Y.push(wk.tail[i*2+1]);}this.strip(X,Y,n,i=>1.8*(1-i/n)+.25,sp.rgb,i=>life*.85*(1-i/n),1);}
+   if(wk.tail){const n=wk.tail.length/2,X=[],Y=[];for(let i=0;i<n;i++){X.push(wk.tail[i*2]);Y.push(wk.tail[i*2+1]);}this.strip(X,Y,n,i=>1.8*(1-i/n)+.25,sp.rgb,1,5);}
    if(wk.head){const h=wk.head,nx=-h[5],ny=h[4],x=h[2],y=h[3];
-    this.strip([h[0],x],[h[1],y],2,1.6,sp.rim,life*.85,1);
-    this.strip([x-h[4]*4+nx*4,x+h[4]*5,x-h[4]*4-nx*4],[y-h[5]*4+ny*4,y+h[5]*5,y-h[5]*4-ny*4],3,1.3,sp.rim,life,1);
+    this.strip([h[0],x],[h[1],y],2,1.6,sp.rim,1,5);
+    this.strip([x-h[4]*4+nx*4,x+h[4]*5,x-h[4]*4-nx*4],[y-h[5]*4+ny*4,y+h[5]*5,y-h[5]*4-ny*4],3,1.3,sp.rim,1,5);
     for(const side of [-1,1])this.dot(x+nx*side*2,y+ny*side*2,1.5,sp.rim,life);
    }
    this.wrapCopies(startBody);
-   for(let k=0;k<L.length;k+=7){const start=this.n,lift=L[k+6];this.strip([L[k],L[k+2],L[k+4]],[L[k+1],L[k+3],L[k+5]],3,i=>[1.6,1.3,.9][i],sp.rim,i=>[.9,.85,.75][i]*life,1);this.dot(L[k+4],L[k+5],2.4+lift*1.8,sp.rim,(.7+.3*lift)*life);this.wrapCopies(start);}}
+   for(let k=0;k<L.length;k+=7){const start=this.n,lift=L[k+6];this.strip([L[k],L[k+2],L[k+4]],[L[k+1],L[k+3],L[k+5]],3,i=>[1.6,1.3,.9][i],sp.rim,1,5);this.dot(L[k+4],L[k+5],2.4+lift*1.8,sp.rim,(.7+.3*lift)*life);this.wrapCopies(start);}}
   const B=this.showBonds?state?.bonds:null;if(B&&B.length&&state.x){const X=state.x,Y=state.y,T=state.type,W=this.world[0],H=this.world[1];
    for(let q=0;q<B.length;q+=2){const a=B[q],b=B[q+1];if(a>=state.count||b>=state.count)continue;const start=this.n,xa=X[a],ya=Y[a];let dx=X[b]-xa,dy=Y[b]-ya;dx-=Math.round(dx/W)*W;dy-=Math.round(dy/H)*H;
     const ca=P.species[T[a]].rgb,cb=P.species[T[b]].rgb;this.strip([xa,xa+dx],[ya,ya+dy],2,.8,i=>i?cb:ca,.5*this.glowBond,1);this.wrapCopies(start);}}
@@ -135,9 +137,9 @@ export class CreatureMesh {
   const fx=x[0]-x[1],fy=y[0]-y[1],fl=Math.hypot(fx,fy)||1,bx=x[n-1]-x[n-2],by=y[n-1]-y[n-2],bl=Math.hypot(bx,by)||1;
   X[0]=x[0]+fx/fl*2;Y[0]=y[0]+fy/fl*2;X[n+1]=x[n-1]+bx/bl*2;Y[n+1]=y[n-1]+by/bl*2;
   this.strip(X,Y,n+2,half+5+4*friend,sp.deep,(.16+.14*friend)*bright,1);
-  // Uniform colour along the whole body; mood only changes overall opacity.
+  // Solid material along the whole body; mood and energy affect the halo, never its opacity.
   const ageTint=(c.maturity||0)*.18,bodyColour=sp.rgb.map((v,k)=>v*(1-ageTint)+sp.accent[k]*ageTint);
-  this.strip(X,Y,n+2,half,bodyColour,Math.min(1,(.82-.3*friend+.12*foe)*bright),5);
+  this.strip(X,Y,n+2,half,bodyColour,1,5);
   // Age leaves a small, stable signature; the original organism remains recognisable.
   const maturity=c.maturity||0;
   for(let k=0;k<Math.floor(maturity*5);k++){const i=1+((k*3+c.id)%Math.max(1,n-2));this.dot(x[i],y[i],1.25,sp.accent,.65*bright);}
@@ -152,7 +154,7 @@ export class CreatureMesh {
   const [x,y,n]=this.split(c),life=Math.max(0,Math.min(1,c.life??1)),bright=Math.min(1.15,this.vigor(c)*(c.fleeing?1.15:1))*life,friend=Math.max(0,c.mood??-1),foe=Math.max(0,-(c.mood??-1));
   const w=i=>(1-i/n)*(1.7+.5*foe)+.35+.8*friend*(1-i/n);
   this.strip(x,y,n,i=>w(i)*2.6,sp.deep,i=>(.22+.12*friend)*(1-i/n)*bright,1);
-  this.strip(x,y,n,w,i=>i<2?sp.rim:sp.rgb,i=>(.95-.75*i/n)*bright,1);
+  this.strip(x,y,n,w,i=>i<2?sp.rim:sp.rgb,1,5);
   if(c.stomach)c.stomach.forEach((t,k)=>{const i=Math.min(n-1,3+k*3);this.dot(x[i],y[i],2.2,this.palette.species[t].rgb,.95*bright);});
   this.dot(x[0],y[0],2+1.2*foe+(c.hunting?.8:0),foe>.3?sp.accent:sp.rim,(.8+.2*foe)*bright);
  }
