@@ -164,3 +164,15 @@ body[data-performance-texture="off"]{--pp-bloom:0;--pp-scan:0}
 .start-title .opening-letter:nth-child(6n + 5){color:var(--pop-accent-1)}
 .start-title .opening-letter:nth-child(6n){color:var(--pop-accent-2)}
 body.pop .start-title .opening-letter{text-shadow:0 0 calc(18px*var(--pp-bloom)) color-mix(in oklab,currentColor 40%,transparent)}
+
+/* Independent rhythms begin after the entrance has released the letter transforms. */
+.title-pulsing .start-title .opening-letter{animation:letter-pulse var(--letter-pulse-duration) cubic-bezier(.2,.8,.2,1) var(--letter-pulse-delay) infinite}
+@keyframes letter-pulse{0%,52%,100%{transform:scale(1)}58%{transform:scale(.97,1.03)}63%{transform:scale(var(--letter-pulse-scale))}72%{transform:scale(.98,1.02)}81%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.title-pulsing .start-title .opening-letter{animation:none}}
+
+/* Large, quiet title: two lines, palette-tinted ink rather than a bright focal point. */
+#start-screen .start-title{font-size:clamp(42px,10.5vw,128px);line-height:.92;top:clamp(30px,6vh,72px);width:max-content;max-width:94vw}
+.start-title .opening-letter:nth-child(9){display:block;height:0;line-height:0;width:100%}
+.start-title .opening-letter{opacity:.36}
+body.pop .start-title .opening-letter{text-shadow:none}
+@media(max-height:540px){#start-screen .start-title{font-size:clamp(32px,7vw,64px);top:20px}}

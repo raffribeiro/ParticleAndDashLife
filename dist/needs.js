@@ -1,4 +1,4 @@
-import {featureLevel,feedingFeatures} from './features.js?v=1.39.1';
+import {featureLevel,feedingFeatures} from './features.js?v=1.39.2';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export function ensureNeeds(a){return a.needs??={reserve:.75,health:1,hunger:.25,resistance:1};}
 export function nourish(a,amount){

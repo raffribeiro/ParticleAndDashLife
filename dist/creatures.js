@@ -1,5 +1,5 @@
-import {shiftFish} from './body-transform.js?v=1.39.1';
-import {stepSoftStrand} from './soft-strand.js?v=1.39.1';
+import {shiftFish} from './body-transform.js?v=1.39.2';
+import {stepSoftStrand} from './soft-strand.js?v=1.39.2';
 // Procedural fish drawn as literal rectangles: kinematic spines (follow-the-leader with bend limits) steered by
 // explicit world rules. Every rule reads the same world the particles live in:
 //  1 hunger    – seek the prey particle species (same food chain as particles)
@@ -17,8 +17,8 @@ import {stepSoftStrand} from './soft-strand.js?v=1.39.1';
 //                into particles; clustered same-species particles condense into new fish, keeping
 //                the fish count around the target. Biomass (free particles + PER_FISH per fish +
 //                stomach contents) is conserved.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.39.1';
-import {SPECIES_SHARE} from './color.js?v=1.39.1';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.39.2';
+import {SPECIES_SHARE} from './color.js?v=1.39.2';
 export const PER_FISH=4,STOMACH=3,MIN_FREE=40;
 export const SIZE=1.15;
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;

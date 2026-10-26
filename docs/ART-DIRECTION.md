@@ -24,7 +24,7 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 ## Interface
 - Linhas e textos sobre o fundo escuro: creme `#f3ead6` (secundário `#b9b2a2`). Destaques: amarelo `#ffde0b`. Ação principal: coral `#ff4f6d`.
 - Cartões: branco, contorno 4 px tinta, sombra dura `4px 4px 0` tinta, raio 22 px. Botões: pílula/16 px, contorno 3 px, sombra dura que "afunda" no clique.
-- Título de abertura: letras alternam as mesmas seis cores vivas do contorno do botão Start, acompanhando as mudanças de paleta. O bloom do texto usa a cor de cada letra.
+- Título de abertura: grande, em duas linhas (Particle / & Dash Life), com contraste reduzido e sem brilho para manter o núcleo e o Start como focos. Letras alternam as mesmas seis cores vivas do contorno do botão Start, acompanhando as mudanças de paleta. O título não recebe glow próprio. Após a entrada, cada letra pulsa em escala com duração, fase e amplitude independentes; a pulsação para ao iniciar a simulação e respeita reduced-motion.
 - Tipografia: **Nunito variável**, embarcada em `dist/fonts/` (SIL Open Font License), com formas arredondadas. Peso 900 para títulos e 800 para ações; leitura regular nos textos de apoio. Sem dependência de serviços de fontes externos.
 - Grade de 8 px. Texto mínimo 11 px. Tipografia pesada em caixa alta só para títulos e rótulos curtos.
 - Contraste mínimo AA (4,5:1) para texto.
