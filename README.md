@@ -22,6 +22,17 @@ A pasta `dist/` contém o aplicativo estático, sem dependências externas. WebG
 
 No GitHub Pages, as preferências são salvas neste navegador. O servidor local opcional `serve.py` também permite gravar as preferências em arquivo.
 
+## Animação da abertura
+
+As letras e o botão usam curvas de `spring()` e `interpolate()` do Remotion, pré-calculadas em `dist/opening-motion-data.js`. O navegador reproduz os keyframes com Web Animations; o botão permanece HTML interativo e a simulação não carrega React nem um player de vídeo. A entrada respeita a preferência por movimento reduzido.
+
+Para recriar as curvas após editar `scripts/build-opening-motion.mjs`:
+
+```sh
+npm ci
+npm run build:opening
+```
+
 ## Licença
 
 Copyright © 2026 raffribeiro.

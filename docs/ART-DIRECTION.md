@@ -10,7 +10,7 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 5. **Hierarquia de espessura.** Corpo > membros > detalhes. Contorno sempre +1,9 px além do traço.
 6. **Pós-processamento.** Bloom e granulado são aplicados à imagem inteira (camada de pós), controlados pelos sliders Bloom e Granulado. No Pop o bloom roda a 55% da intensidade do slider, sem compressão de realces (as cores chapadas ficam com saturação total) e com vinheta leve. O fundo entra no composite como cor chapada.
 7. **Textura de tela.** Efeito TV/VHS opcional (slider "Linhas de TV"): scanlines, faixa rolante, tracking, franja cromática e jitter leve de matiz/saturação — sempre sutil, nunca a ponto de esconder as formas.
-8. **Abertura sem loading.** O aglomerado aparece primeiro, pulsando; depois o nome e depois o botão, cada um de estalo (sem fade). Só nome + botão.
+8. **Abertura sem loading.** O aglomerado aparece primeiro, pulsando; depois as letras entram em sequência com squash, impacto e rebote curto; o botão acompanha. Curvas criadas com Remotion e exportadas para Web Animations (sem player no runtime). Respeitar reduced-motion. Título próximo ao topo e botão logo abaixo do núcleo central. Só nome + botão.
 9. **Pós cobre tudo.** Granulado, scanlines e faixa rolante ficam no overlay `#screen-fx`, por cima da cena e da UI; a UI ganha brilho e franja cromática proporcionais aos sliders.
 10. **Nada escrito durante a obra.** Com a interface oculta, nenhum texto na tela (nem etiqueta, nem versão).
 11. **Feedback só por escala.** Golpes, nascimento, perturbação e ondas são escala das próprias partículas. Sem anéis, faíscas ou overlays desenhados.

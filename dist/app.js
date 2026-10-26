@@ -1,14 +1,16 @@
-import {SceneGesture} from './scene-interaction.js?v=1.37.3';
-import {BigBang} from './big-bang.js?v=1.37.3';
-import {mergeChanged} from './pending-changes.js?v=1.37.3';
-import {DoubleTap} from './tap-gesture.js?v=1.37.3';
-import {canvasSize} from './canvas-size.js?v=1.37.3';
-import {FrameClock} from './timing.js?v=1.37.3';
+import {prepareOpening} from './opening-motion.js?v=1.38.0';
+window.lumaOpening=prepareOpening();
+import {SceneGesture} from './scene-interaction.js?v=1.38.0';
+import {BigBang} from './big-bang.js?v=1.38.0';
+import {mergeChanged} from './pending-changes.js?v=1.38.0';
+import {DoubleTap} from './tap-gesture.js?v=1.38.0';
+import {canvasSize} from './canvas-size.js?v=1.38.0';
+import {FrameClock} from './timing.js?v=1.38.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.37.3';
+let lowFps=0,lowUntil=0;export const VERSION='1.38.0';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.37.3';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.37.3';import {Renderer} from './renderer.js?v=1.37.3';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.38.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.38.0';import {Renderer} from './renderer.js?v=1.38.0';
 const $=id=>document.getElementById(id),canvas=$('universe');window.lumaLoader?.set(.45,'Preparando a GPU');let renderer;try{renderer=new Renderer(canvas);}catch(e){window.lumaLoader?.fail('Este navegador não conseguiu iniciar o WebGL.');$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 window.lumaLoader?.set(.62,'Iniciando a simulação');let loaderSnapshot=false;
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
@@ -55,7 +57,7 @@ $('palette-auto').onchange=e=>{paletteState.auto=e.target.checked;nextPaletteAt=
 $('palette-interval').oninput=e=>{paletteState.interval=+e.target.value;$('palette-interval-value').textContent=e.target.value+' s';nextPaletteAt=0;};
 function matrix(){const el=$('matrix');el.replaceChildren();el.append(document.createElement('span'));for(const c of COLORS){const i=document.createElement('i');i.style.background=c;el.append(i);}s.matrix.forEach((row,a)=>{const i=document.createElement('i');i.style.background=COLORS[a];el.append(i);row.forEach((v,b)=>{const button=document.createElement('button');button.textContent=(v>0?'+':'')+v.toFixed(1);button.style.background=v>0?`rgba(119,221,169,${Math.abs(v)*.24+.03})`:`rgba(196,137,180,${Math.abs(v)*.24+.03})`;button.setAttribute('aria-label',`Espécie ${a+1} para ${b+1}: ${v.toFixed(1)}`);button.onclick=()=>{matrixRevision++;current='custom';s.matrix[a][b]=v<-.1?0:v<.1?.7:-.7;document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));$('preset-description').textContent='Afinidades personalizadas. Observe o que muda.';matrix();$('matrix').querySelectorAll('button')[a*6+b].focus();};el.append(button);});});}
 function preset(key){if(key==='random'){behaviorConfig.enabled=true;behaviorConfig.kick=Date.now();document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset==='random'));$('preset-description').textContent='Alterna entre Simbiose, Correntes, Predador e presa e Colônias a cada '+behaviorConfig.interval+' s, com transição suave.';sync();return;}behaviorConfig.enabled=false;matrixRevision++;current=key;s.preset(key);document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===key));$('preset-description').textContent=PRESETS[key].description;matrix();}document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>preset(b.dataset.preset));preset(current);applyPalette();
-$('start-simulation').onclick=()=>{if(started)return;started=true;paused=false;lastPaletteTick=0;nextPaletteAt=0;$('start-screen').hidden=true;document.body.classList.remove('awaiting-start');$('start-simulation').blur();needsRender=true;updatePause();sync();};
+$('start-simulation').onclick=()=>{if(started)return;started=true;window.lumaOpening?.stop();paused=false;lastPaletteTick=0;nextPaletteAt=0;$('start-screen').hidden=true;document.body.classList.remove('awaiting-start');$('start-simulation').blur();needsRender=true;updatePause();sync();};
 function updatePause(){ $('pause').textContent=paused?'▶ Continuar':'Ⅱ Pausar';$('status').textContent=paused?'Universo em pausa':'Universo em movimento';}function togglePause(){paused=!paused;accumulator=0;sync();updatePause();}updatePause();$('pause').onclick=togglePause;
 $('reset').onclick=()=>s.reset();// Random behavior: a fresh affinity matrix; a click on Aleatório again draws another.
 function randomBehavior(){behaviorConfig.enabled=false;matrixRevision++;current='custom';s.matrix=s.matrix.map(row=>row.map(()=>Math.round((Math.random()*2-1)*10)/10));document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));$('preset-description').textContent='Afinidades sorteadas. Clique em Sortear de novo para outras.';matrix();}$('random').onclick=randomBehavior;
