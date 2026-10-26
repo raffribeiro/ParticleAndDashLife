@@ -1,17 +1,17 @@
-import {PerformanceGovernor} from './performance.js?v=1.39.3';
-import {prepareOpening} from './opening-motion.js?v=1.39.3';
+import {PerformanceGovernor} from './performance.js?v=1.40.0';
+import {prepareOpening} from './opening-motion.js?v=1.40.0';
 window.lumaOpening=prepareOpening();
-import {SceneGesture} from './scene-interaction.js?v=1.39.3';
-import {BigBang} from './big-bang.js?v=1.39.3';
-import {mergeChanged} from './pending-changes.js?v=1.39.3';
-import {DoubleTap} from './tap-gesture.js?v=1.39.3';
-import {canvasSize} from './canvas-size.js?v=1.39.3';
-import {FrameClock} from './timing.js?v=1.39.3';
+import {SceneGesture} from './scene-interaction.js?v=1.40.0';
+import {BigBang} from './big-bang.js?v=1.40.0';
+import {mergeChanged} from './pending-changes.js?v=1.40.0';
+import {DoubleTap} from './tap-gesture.js?v=1.40.0';
+import {canvasSize} from './canvas-size.js?v=1.40.0';
+import {FrameClock} from './timing.js?v=1.40.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.39.3';
+let lowFps=0,lowUntil=0;export const VERSION='1.40.0';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.39.3';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.39.3';import {Renderer} from './renderer.js?v=1.39.3';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.40.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.40.0';import {Renderer} from './renderer.js?v=1.40.0';
 const $=id=>document.getElementById(id),canvas=$('universe');window.lumaLoader?.set(.45,'Preparando a GPU');let renderer;try{renderer=new Renderer(canvas);}catch(e){window.lumaLoader?.fail('Este navegador não conseguiu iniciar o WebGL.');$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 window.lumaLoader?.set(.62,'Iniciando a simulação');let loaderSnapshot=false;
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
@@ -23,11 +23,11 @@ const creatureConfig={enabled:true,count:30,wake:true,mood:true,moodPeriod:45};l
 const paletteState={rotate:0,preset:'pop',triple:{...OPENING_PALETTE},auto:true,interval:45};let livePalette=null,paletteFrom=null,paletteTo=null,paletteT0=0,nextPaletteAt=0,lastPaletteTick=0;const PALETTE_FADE=6000;let renderScale=1,idleTimer=null;
 // 60 fps render, matched to the 60 Hz physics in the worker.
 const governor=new PerformanceGovernor();
-function applyQuality(){const q=governor.quality;renderer.quality=q;renderer.scale=renderScale=q.scale;document.body.dataset.performanceTexture=q.texture;needsRender=true;}
-applyQuality();
+function applyQuality(notify=true){const q=governor.quality;renderer.quality=q;renderer.scale=renderScale=q.scale;document.body.dataset.performanceTexture=q.texture;needsRender=true;if(notify)worker.postMessage({kind:'population-budget',factor:q.population,target:+$('population').value});}
+applyQuality(false);
 const clock=new FrameClock(60);let started=false,settingsReady=false,openingRevision=null;let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});
-function sync(){worker.postMessage({kind:'config',matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:requestedSize.width,height:requestedSize.height});}
+function sync(){worker.postMessage({kind:'config',populationScale:governor.quality.population,populationTarget:+$('population').value,matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:requestedSize.width,height:requestedSize.height});}
 worker.onmessage=({data:m})=>{if(!loaderSnapshot){loaderSnapshot=true;needsRender=true;window.lumaLoader?.set(.88,'Formando o universo');}if(m.revision!==revision||m.width!==requestedSize.width||m.height!==requestedSize.height)return;s.width=m.width;s.height=m.height;canvas.classList.toggle('grabbing',!!m.dragging);if(m.openingWaiting)openingRevision=m.revision;for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor'])s[key]=m[key];s.openingScale=m.openingScale??1;s.openingColorMix=m.openingColorMix??1;s.openingGlow=m.openingGlow||0;s.count=m.count;s.historyRevision=m.revision;s.consumed=m.consumed;s.combat=m.combat;s.ecosystem=m.ecosystem;s.changed=mergeChanged(s.changed,m.changed,m.count);s.events=[...(s.events||[]),...(m.events||[])].slice(-32);s.habitats=m.habitats;if(m.ecosystem&&$('ecosystem-status'))$('ecosystem-status').textContent=m.ecosystem.hunters+' caçadores · '+m.ecosystem.evaders+' evasivos · '+m.ecosystem.resting+' em repouso · '+m.ecosystem.memories+' com memória · '+m.ecosystem.hunting+' caçando · '+m.ecosystem.births+' filhotes';s.bonds=m.bonds;s.walkers=m.walkers;s.creatures=m.creatures;creatureStats=m.creatureStats;snapshotAt=performance.now();stepMs=m.stepMs;if(m.behavior){
  s.matrix=m.behavior.matrix;
  if(behaviorConfig.enabled){const changed=current!==m.behavior.key;current=m.behavior.key;
@@ -39,7 +39,7 @@ worker.onmessage=({data:m})=>{if(!loaderSnapshot){loaderSnapshot=true;needsRende
 }mobilityMin=m.mobilityMin;mobilityMax=m.mobilityMax;disturbanceCount=m.disturbanceCount;nextDisturbance=m.nextDisturbance;if(m.disturbanceEvent){const event=m.disturbanceEvent;if(event.kind==='affinities'){$('last-disturbance').textContent='✧ As afinidades estão mudando';s.matrix=event.matrix;matrix();if(!behaviorConfig.enabled){document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));current='custom';$('preset-description').textContent='As afinidades mudaram suavemente. Um novo equilíbrio está surgindo.';}}else{$('last-disturbance').textContent='◌ Onda de impulso atravessando a colônia';}}needsRender=true;};
 worker.onerror=()=>{window.lumaLoader?.fail('A simulação não conseguiu iniciar. Recarregue a página.');$('notice').textContent='A simulação foi interrompida. Recarregue a página para reiniciar.';$('notice').style.display='block';};
 worker.postMessage({kind:'init',waitForFrame:true,count:s.count,width:s.width,height:s.height});
-const resetLocal=s.reset.bind(s);s.reset=(count=s.count)=>{resetLocal(count);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;sceneGesture.cancel();canvas.classList.remove('grabbing');s.historyRevision=revision;worker.postMessage({kind:'reset',waitForFrame:true,revision,count:s.count});needsRender=true;};
+const resetLocal=s.reset.bind(s);s.reset=(count=+$('population').value)=>{resetLocal(count);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.creatures=[];s.walkers=[];s.combat=null;s.events=[];s.changed=null;revision++;sceneGesture.cancel();canvas.classList.remove('grabbing');s.historyRevision=revision;worker.postMessage({kind:'reset',waitForFrame:true,revision,count:s.count});needsRender=true;};
 function legend(){if(!$('legend'))return;$('legend').replaceChildren();for(const c of COLORS){const dot=document.createElement('i');dot.style.color=dot.style.background=c;$('legend').append(dot);}}
 function paletteSource(){return paletteState.preset==='generated'?paletteState.triple:paletteState.preset;}
 function commitPalette(p){livePalette=p;document.body.classList.toggle('pop',!!p.pop);['--pop-base-1','--pop-base-2','--pop-hot-1','--pop-hot-2','--pop-accent-1','--pop-accent-2'].forEach((k,i)=>document.documentElement.style.setProperty(k,p.colors[i]));COLORS.splice(0,COLORS.length,...p.colors);renderer.setPalette(p);const root=document.documentElement.style,hex=c=>'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');root.setProperty('--mint',p.colors[4]);for(const [key,i] of [['blue',0],['pink',2],['lime',4]])root.setProperty('--start-'+key,p.colors[i]);root.setProperty('--bg',hex(p.background));root.setProperty('--panel',hex(p.panel));document.querySelector('meta[name=theme-color]').content='#'+p.background.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
@@ -127,7 +127,7 @@ function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(no
    {const low=!paused&&!document.hidden&&fps<57.5,tag=$('version');$('fps').classList.toggle('fps-low',low);
     if(low){lowFps=Math.round(fps);lowUntil=now+4000;if(!location.hostname.endsWith('github.io'))fetch('/fps-log',{method:'POST',body:JSON.stringify({fps:lowFps,scale:renderScale,stepMs:+stepMs.toFixed(1),count:s.count,orgs:s.walkers?.length||0,v:VERSION})}).catch(()=>{});}
     if(tag&&!tag.classList.contains('stale')){const show=now<lowUntil;tag.classList.toggle('fps-low',show);tag.textContent='v'+VERSION+(show?' · '+lowFps+' fps':'');}}
-   $('performance-status').textContent=started?governor.summary:'O teste começa após a explosão';
+   $('performance-status').textContent=started?governor.summary+(governor.quality.population<1?' · população adaptativa':''):'O teste começa após a explosão';
    $('fps').title='Física: '+stepMs.toFixed(1).replace('.',',')+' ms por atualização · resolução '+Math.round(renderScale*100)+'% · quadro p95 '+governor.frameMs.toFixed(1)+' ms';$('creature-status').textContent=creatureSummary();$('combat-status').textContent=combatSummary();$('count').textContent=fmt(s.count);$('bond-status').textContent=bonding?fmt((s.bonds?.length||0)/2)+' ligações':'Desligadas';$('walker-status').textContent=walkerSummary();if(creatureStats){const st=creatureStats;$('mood-status').textContent=!creatureConfig.mood?'Sempre inimigos':(st.friends+' amigos · '+(st.fish-st.friends)+' inimigos');}$('palette-status').textContent=paletteState.auto?(paletteTo?'Transição em curso':'Próxima em '+Math.max(0,Math.ceil((nextPaletteAt-now)/1000))+' s'):'Automático desligado';frames=0;sample=now;$('mobility-range').textContent=s.dynamicMobility?mobilityMin.toFixed(2).replace('.',',')+'–'+mobilityMax.toFixed(2).replace('.',',')+'×':'Uniforme · 1,00×';$('disturbance-status').textContent=disturbance.enabled?(disturbance.pulseOnly||disturbanceCount%2===0?'Pulso':'Afinidades')+' em '+Math.ceil(nextDisturbance)+' s':'Automático desligado';$('feeding').textContent=s.ecology?' / '+fmt(s.consumed)+' trocas':'';}}
 sync();
 

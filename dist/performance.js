@@ -1,12 +1,12 @@
 // Measure actual rendered frames, not display refresh callbacks or an idle start screen.
 export const QUALITY_LEVELS=[
- {name:'Alta',scale:1,bloomLevels:5,post:true,texture:'full',trails:1,backdrop:true},
- {name:'Equilibrada',scale:.9,bloomLevels:4,post:true,texture:'full',trails:1,backdrop:true},
- {name:'Leve',scale:.75,bloomLevels:3,post:true,texture:'static',trails:.6,backdrop:true},
- {name:'Econômica',scale:.6,bloomLevels:3,post:true,texture:'static',trails:.3,backdrop:false},
- {name:'Mínima',scale:.45,bloomLevels:2,post:true,texture:'off',trails:0,backdrop:false},
- {name:'Essencial',scale:.35,bloomLevels:2,post:false,texture:'off',trails:0,backdrop:false},
- {name:'Máximo desempenho',scale:.25,bloomLevels:2,post:false,texture:'off',trails:0,backdrop:false}
+ {name:'Alta',population:1,scale:1,bloomLevels:5,post:true,texture:'full',trails:1,backdrop:true},
+ {name:'Equilibrada',population:1,scale:.9,bloomLevels:4,post:true,texture:'full',trails:1,backdrop:true},
+ {name:'Leve',population:0.85,scale:.75,bloomLevels:3,post:true,texture:'static',trails:.6,backdrop:true},
+ {name:'Econômica',population:0.65,scale:.6,bloomLevels:3,post:true,texture:'static',trails:.3,backdrop:false},
+ {name:'Mínima',population:0.5,scale:.45,bloomLevels:2,post:true,texture:'off',trails:0,backdrop:false},
+ {name:'Essencial',population:0.35,scale:.35,bloomLevels:2,post:false,texture:'off',trails:0,backdrop:false},
+ {name:'Máximo desempenho',population:0.22,scale:.25,bloomLevels:2,post:false,texture:'off',trails:0,backdrop:false}
 ];
 const p95=a=>{const v=[...a].sort((x,y)=>x-y);return v[Math.max(0,Math.ceil(v.length*.95)-1)]||0;};
 export class PerformanceGovernor{
@@ -27,7 +27,7 @@ export class PerformanceGovernor{
   this.fps=this.intervals.length*1000/this.elapsed;this.frameMs=p95(this.intervals);this.drawMs=p95(this.draws);this.stepMs=p95(this.steps);
   const seconds=this.elapsed/1000;this.elapsed=0;this.intervals=[];this.draws=[];this.steps=[];
   this.calibrationWindows++;if(this.calibrationWindows>=3)this.calibrated=true;
-  const slow=this.fps<57.5||this.frameMs>24||this.drawMs>12;
+  const slow=this.fps<57.5||this.frameMs>24||this.drawMs>12||this.stepMs>1000/60;
   this.slow=slow?this.slow+1:0;this.stable=!slow&&this.fps>=59&&this.drawMs<7&&this.stepMs<12?this.stable+seconds:0;
   if(!this.enabled||now-this.lastChange<2500)return false;
   if(this.slow>=(this.calibrated?2:1)&&this.level<QUALITY_LEVELS.length-1){

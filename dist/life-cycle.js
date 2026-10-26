@@ -1,12 +1,17 @@
-import {FACTION_CAP,factionOf} from './combat.js?v=1.39.3';
-import {inheritFeatures} from './features.js?v=1.39.3';
-import {ensureNeeds} from './needs.js?v=1.39.3';
-import {VALENCE,wrappedDelta} from './simulation.js?v=1.39.3';
-import {inheritTraits,reproductionRules} from './traits.js?v=1.39.3';
-import {createFish} from './creatures.js?v=1.39.3';
-import {SPECIES_PATTERN} from './simulation.js?v=1.39.3';
+import {FACTION_CAP,factionOf} from './combat.js?v=1.40.0';
+import {inheritFeatures} from './features.js?v=1.40.0';
+import {ensureNeeds} from './needs.js?v=1.40.0';
+import {VALENCE,wrappedDelta} from './simulation.js?v=1.40.0';
+import {inheritTraits,reproductionRules} from './traits.js?v=1.40.0';
+import {createFish} from './creatures.js?v=1.40.0';
+import {SPECIES_PATTERN} from './simulation.js?v=1.40.0';
 export class LifeCycle{
- constructor(target=300){this.target=target;this.tick=0;this.births=0;this.catches=0;}
+ constructor(target=300){this.target=target;this.requestedTarget=target;this.populationFactor=1;this.lastTrimAt=-Infinity;this.tick=0;this.births=0;this.catches=0;}
+ configurePopulation(requested=this.requestedTarget,factor=1){
+  if(Number.isFinite(+requested))this.requestedTarget=Math.max(40,Math.min(12000,Math.round(+requested)));
+  this.populationFactor=Number.isFinite(+factor)?Math.max(.1,Math.min(1,+factor)):1;
+  this.target=Math.min(this.requestedTarget,Math.max(100,Math.round(this.requestedTarget*this.populationFactor)));
+ }
  total(sim,creatures){return sim.count+creatures.list.reduce((n,c)=>n+4+c.stomach.length,0);}
  grow(a,sim,walkers){
   // Hunters grow when fed; the Colosso faction always grows toward big bodies.
@@ -37,18 +42,18 @@ export class LifeCycle{
   const added=[];for(let k=0;k<count;k++){const x=Math.random()*sim.width,y=Math.random()*sim.height,type=SPECIES_PATTERN[Math.floor(Math.random()*SPECIES_PATTERN.length)];added.push({x,y,vx:0,vy:0,type,energy:1,stage:0});walkers.events.push({kind:'birth',x,y,species:type});}
   sim.rebuild(new Set(),added);walkers.remap(sim);this.spawned=(this.spawned||0)+count;
  }
- step(sim,creatures,walkers){
+ step(sim,creatures,walkers,now=this.tick*1000/60){
   this.tick++;
   if(this.tick%120===0&&walkers.enabled)for(const a of [...walkers.list]){this.grow(a,sim,walkers);this.reproduce(a,sim,creatures,walkers);}
   // The wheel keeps turning: below target, new circles are born; old free circles are recycled into new ones.
   if(this.tick%30===0&&this.total(sim,creatures)<this.target*.98)this.spawn(sim,walkers,2);
-  if(this.tick%90===45){const protectedIds=new Set(walkers.list.flatMap(a=>a.members));let old=-1,oldest=.85;for(let i=0;i<sim.count;i++){if(protectedIds.has(i)||sim.bondCount[i])continue;const t=sim.age[i]/sim.lifespan[i];if(t>oldest){oldest=t;old=i;}}
+  if(this.tick%90===45){const protectedIds=new Set([...walkers.list.flatMap(a=>a.members),...(walkers.thrown||[]).map(o=>o.i)]);let old=-1,oldest=.85;for(let i=0;i<sim.count;i++){if(protectedIds.has(i)||sim.bondCount[i])continue;const t=sim.age[i]/sim.lifespan[i];if(t>oldest){oldest=t;old=i;}}
    if(old>=0&&sim.count>40){walkers.events.push({kind:'death',x:sim.x[old],y:sim.y[old],species:sim.type[old]});sim.rebuild(new Set([old]));walkers.remap(sim);this.spawn(sim,walkers,1);}}
-  if(this.tick%60!==0||this.total(sim,creatures)<=this.target*1.02)return;
-  const protectedIds=new Set(walkers.list.flatMap(a=>a.members)),eligible=[];
+  const optimized=this.populationFactor<1;if((optimized?now-this.lastTrimAt<250:this.tick%60!==0)||this.total(sim,creatures)<=this.target*1.02)return;if(optimized)this.lastTrimAt=now;
+  const protectedIds=new Set([...walkers.list.flatMap(a=>a.members),...(walkers.thrown||[]).map(o=>o.i)]),eligible=[];
   for(let i=0;i<sim.count;i++)if(!protectedIds.has(i)&&sim.count-eligible.length>40)eligible.push(i);
-  eligible.sort((a,b)=>sim.age[b]/sim.lifespan[b]-sim.age[a]/sim.lifespan[a]);
-  const removed=eligible.slice(0,Math.min(2,Math.ceil(this.total(sim,creatures)-this.target*1.02)));
+  eligible.sort((a,b)=>(optimized?Number(sim.bondCount[a]>0)-Number(sim.bondCount[b]>0):0)||sim.age[b]/sim.lifespan[b]-sim.age[a]/sim.lifespan[a]);
+  const removed=eligible.slice(0,Math.min(optimized?Math.min(32,Math.max(2,Math.ceil(this.requestedTarget*.02))):2,Math.ceil(this.total(sim,creatures)-this.target*1.02)));
   if(removed.length){for(const i of removed)walkers.events.push({kind:'death',x:sim.x[i],y:sim.y[i],species:sim.type[i]});sim.rebuild(new Set(removed));walkers.remap(sim);}
  }
 }

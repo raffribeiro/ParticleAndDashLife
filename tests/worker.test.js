@@ -38,3 +38,15 @@ test('paused worker resizes stroke skeletons coherently through a fullscreen rou
  const cfg={kind:'config',paused:false,visible:true,pointer:null,matrix:PRESETS.symbiosis.matrix,radius:85,force:.65,ecology:false,width:900,height:650,walkers:{enabled:false},creatures:{enabled:true,count:5}};
  try{worker.postMessage({kind:'init',count:300,width:900,height:650});worker.postMessage(cfg);await wait(()=>messages.at(-1)?.openingColorMix===1&&messages.at(-1)?.creatures.length);worker.postMessage({...cfg,paused:true});await wait(()=>messages.at(-1)?.paused===true);const before=messages.at(-1),f=before.creatures[0],length=Math.hypot(f.points[2]-f.points[0],f.points[3]-f.points[1]);worker.postMessage({...cfg,paused:true,width:1400,height:900});await wait(()=>messages.at(-1)?.width===1400);const grown=messages.at(-1).creatures.find(c=>c.id===f.id);assert.ok(Math.abs(Math.hypot(grown.points[2]-grown.points[0],grown.points[3]-grown.points[1])-length)<.001);worker.postMessage({...cfg,paused:true});await wait(()=>messages.at(-1)?.width===900);const restored=messages.at(-1);assert.equal(restored.count,before.count);const points=restored.creatures.find(c=>c.id===f.id).points;assert.ok(points.every((v,i)=>Math.abs(v-f.points[i])<.001));assert.ok(restored.x.every(Number.isFinite));}finally{await worker.terminate();}
 });
+
+test('worker adjusts optimized population budgets without resetting the running simulation',async()=>{
+ const url=new URL('../dist/worker.js',import.meta.url).href,bridge=`const {parentPort}=await import('node:worker_threads');globalThis.postMessage=(...args)=>parentPort.postMessage(...args);await import(${JSON.stringify(url)});parentPort.on('message',data=>globalThis.onmessage({data}));`;
+ const worker=new Worker(new URL('data:text/javascript,'+encodeURIComponent(bridge))),messages=[];worker.on('message',m=>messages.push(m));
+ const wait=async predicate=>{const end=Date.now()+6000;while(!predicate()){if(Date.now()>end)throw Error('population budget timeout');await new Promise(r=>setTimeout(r,20));}};
+ try{worker.postMessage({kind:'init',count:600,width:900,height:650});worker.postMessage({kind:'config',paused:false,visible:true,pointer:null,matrix:PRESETS.symbiosis.matrix,radius:85,force:.65,ecology:false,width:900,height:650,walkers:{enabled:false},combat:{enabled:false},creatures:{enabled:false,count:0},populationTarget:600,populationScale:1});
+  await wait(()=>messages.at(-1)?.openingColorMix===1);const before=messages.at(-1).count;
+  worker.postMessage({kind:'population-budget',target:600,factor:.35});await wait(()=>messages.at(-1)?.populationBudget===210&&messages.at(-1).count<before-30);
+  const reduced=messages.at(-1);assert.equal(reduced.populationRequested,600);assert.equal(reduced.revision,0);assert.equal(reduced.openingColorMix,1);
+  worker.postMessage({kind:'population-budget',target:600,factor:1});await wait(()=>messages.at(-1)?.populationBudget===600&&messages.at(-1).count>reduced.count);assert.equal(messages.at(-1).revision,0);
+ }finally{await worker.terminate();}
+});

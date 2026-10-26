@@ -17,7 +17,7 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 12. **Movimento.** Transições de UI 150 ms ease-out (`--pop-ease`); respeitar `prefers-reduced-motion`.
 
 ## Adaptação de desempenho
-- Preservar população, identidades e silhuetas. O alvo de 60 fps tem prioridade sobre resolução, passos de bloom, granulado/VHS animados e rastros em aparelhos lentos.
+- Preservar criaturas formadas, identidades e silhuetas. Em níveis econômicos, reduzir gradualmente partículas soltas para aliviar a física, sem reset; o controle mantém a população desejada. O alvo de 60 fps tem prioridade sobre resolução, passos de bloom, granulado/VHS animados e rastros em aparelhos lentos.
 - Ajustes automáticos são limites temporários; nunca sobrescrever os controles salvos do usuário. Recuperar qualidade somente após estabilidade prolongada.
 - Resultado da calibração fica no painel de controles, sem adicionar texto sobre a obra em modo wallpaper.
 
