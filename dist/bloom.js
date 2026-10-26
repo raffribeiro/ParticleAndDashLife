@@ -23,11 +23,21 @@ export class Bloom {
     gl_FragColor=vec4(c*max(w,0.),1.);}`);
   this.down=compile(gl,head+`void main(){vec2 h=texel*.8;vec3 c=texture2D(src,uv).rgb*4.+texture2D(src,uv-h).rgb+texture2D(src,uv+h).rgb+texture2D(src,uv+vec2(h.x,-h.y)).rgb+texture2D(src,uv-vec2(h.x,-h.y)).rgb;gl_FragColor=vec4(c/8.,1.);}`);
   this.up=compile(gl,head+`uniform float weight;void main(){vec2 h=texel*2.;vec3 c=texture2D(src,uv+vec2(-h.x*2.,0.)).rgb+texture2D(src,uv+vec2(-h.x,h.y)).rgb*2.+texture2D(src,uv+vec2(0.,h.y*2.)).rgb+texture2D(src,uv+vec2(h.x,h.y)).rgb*2.+texture2D(src,uv+vec2(h.x*2.,0.)).rgb+texture2D(src,uv+vec2(h.x,-h.y)).rgb*2.+texture2D(src,uv+vec2(0.,-h.y*2.)).rgb+texture2D(src,uv+vec2(-h.x,-h.y)).rgb*2.;gl_FragColor=vec4(c/12.*weight,1.);}`);
-  this.composite=compile(gl,`precision mediump float;varying vec2 uv;uniform sampler2D scene;uniform sampler2D bloom;uniform sampler2D backdrop;uniform float intensity;uniform vec3 tint;uniform float seed;uniform float grain;
+  this.composite=compile(gl,`precision mediump float;varying vec2 uv;uniform sampler2D scene;uniform sampler2D bloom;uniform sampler2D backdrop;uniform float intensity;uniform vec3 tint;uniform float seed;uniform float grain;uniform float pop;uniform float scan;uniform float time;uniform float pixel;
    float hash(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233))+seed)*43758.5453);}
-   void main(){vec3 s=texture2D(scene,uv).rgb;vec3 b=texture2D(bloom,uv).rgb;vec3 c=texture2D(backdrop,uv).rgb+s+b*intensity+b*b*intensity*.35;
-    float m=max(c.r,max(c.g,c.b)),t=.72;if(m>t){float n=t+(1.-t)*(1.-exp(-(m-t)/(1.-t)));c*=n/m;}
-    vec2 q=uv-.5;c*=mix(1.,.78,smoothstep(.25,.75,dot(q,q)*2.2));c=max(c,tint*.0);
+   void main(){
+    // Old TV / VHS: faint tracking wobble, chromatic fringe growing toward the edges (scene only).
+    vec2 st=uv;st.x+=scan*.0009*sin(uv.y*140.+time*5.)+scan*.0006*sin(uv.y*23.-time*1.7);
+    vec2 ca=(uv-.5)*scan*.006;
+    vec3 s=vec3(texture2D(scene,st+ca).r,texture2D(scene,st).g,texture2D(scene,st-ca).b);vec3 b=texture2D(bloom,uv).rgb;vec3 c=texture2D(backdrop,uv).rgb+s+b*intensity+b*b*intensity*.35;
+    // Pop: keep flat fills at full vividness (soft clip only above white) and a lighter vignette.
+    float m=max(c.r,max(c.g,c.b)),t=pop>.5?.92:.72;if(m>t){float n=t+(1.-t)*(1.-exp(-(m-t)/(1.-t)));c*=n/m;}
+    vec2 q=uv-.5;c*=mix(1.,pop>.5?.88:.78,smoothstep(.25,.75,dot(q,q)*2.2));c=max(c,tint*.0);
+    // VHS chroma jitter: hue rotates and saturation breathes a little, per horizontal band and over time.
+    {float band=floor(uv.y*48.+time*3.),n=fract(sin(dot(vec2(band,floor(time*12.)),vec2(12.9898,78.233)))*43758.5453);
+     float a=scan*(.10*sin(time*1.3+uv.y*6.)+.12*(n-.5)),sat=1.+scan*(.16*sin(time*.9+uv.y*2.)+.18*(n-.5));
+     vec3 k=vec3(.57735);c=c*cos(a)+cross(k,c)*sin(a)+k*dot(k,c)*(1.-cos(a));float lum=dot(c,vec3(.299,.587,.114));c=max(mix(vec3(lum),c,sat),0.);}
+    // (Scanlines, rolling band and grain are drawn by the #screen-fx overlay so they also cover the UI.)
     // Film grain: per-frame noise, slightly stronger in midtones.
     float l=dot(c,vec3(.299,.587,.114));float g=(hash(gl_FragCoord.xy*.73+seed*91.7)+hash(gl_FragCoord.xy*1.37-seed*53.1)-1.)*grain*1.8*(.55+.9*l*(1.-l)*2.);
     c+=g+(hash(gl_FragCoord.xy)-.5)/255.;gl_FragColor=vec4(c,1.);}`);
@@ -54,7 +64,7 @@ export class Bloom {
  }
  // Returns true when the scene should be drawn into the bloom FBO.
  begin(w,h){
-  if(!this.ok||(this.intensity<=0&&this.grain<=0))return false;if(!this.resize(w,h))return false;
+  if(!this.ok||(this.intensity<=0&&this.grain<=0&&!(this.scan>0)))return false;if(!this.resize(w,h))return false;
   const gl=this.gl;gl.bindFramebuffer(gl.FRAMEBUFFER,this.backdrop.fb);gl.viewport(0,0,w,h);return true;
  }
  foreground(){const gl=this.gl;gl.bindFramebuffer(gl.FRAMEBUFFER,this.scene.fb);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);}
@@ -73,7 +83,7 @@ export class Bloom {
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.scene.tex);gl.uniform1i(c.u('scene'),0);
   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,L[0].tex);gl.uniform1i(c.u('bloom'),1);
   gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,this.backdrop.tex);gl.uniform1i(c.u('backdrop'),2);
-  gl.uniform1f(c.u('intensity'),this.intensity*1.6/L.length);gl.uniform3f(c.u('tint'),...background);gl.uniform1f(c.u('seed'),(performance.now()%1000)*.001);gl.uniform1f(c.u('grain'),this.grain||0);
+  gl.uniform1f(c.u('intensity'),this.intensity*1.6/L.length);gl.uniform3f(c.u('tint'),...background);gl.uniform1f(c.u('seed'),(performance.now()%1000)*.001);gl.uniform1f(c.u('grain'),this.grain||0);gl.uniform1f(c.u('pop'),this.pop?1:0);gl.uniform1f(c.u('scan'),this.scan||0);gl.uniform1f(c.u('time'),(performance.now()/1000)%3600);gl.uniform1f(c.u('pixel'),Math.max(1,this.pixel||1));
   gl.drawArrays(gl.TRIANGLES,0,3);gl.activeTexture(gl.TEXTURE0);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
  }

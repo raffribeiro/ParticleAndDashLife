@@ -30,28 +30,108 @@ body.touch-ui.wallpaper #restore,body.touch-ui.wallpaper.idle #restore{display:b
 
 #universe.grabbing{cursor:grabbing!important}
 
-/* Loading screen, bold-pop style: flat saturated colour, heavy black contour, motion dashes; animation by scale and bounce. */
-#loader{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#ffd60a;color:#111;transition:opacity .6s ease}
-#loader.leaving{opacity:0;pointer-events:none}#loader[hidden]{display:none}
-.loader-art{width:min(260px,62vw);height:auto;overflow:visible}
-.loader-art circle{stroke:#111;stroke-width:7}
-.loader-art .leg,.loader-art .dash path,.loader-art .ground{fill:none;stroke:#111;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
-.loader-art .ground-b{stroke-width:6}
-.critter{transform-origin:110px 150px;animation:loader-hop .7s cubic-bezier(.3,.7,.4,1) infinite alternate}
-.blob{transform-origin:112px 100px;animation:loader-squash .7s ease-in-out infinite alternate}
-.leg{transform-box:fill-box;transform-origin:50% 0;animation:loader-step .35s ease-in-out infinite alternate}
-.l2,.l4{animation-direction:alternate-reverse}
-.dash{transform-origin:110px 88px;animation:loader-pop .7s steps(1) infinite}
-.dash-b{animation-delay:.35s}
-.ground{transform-origin:110px 152px;animation:loader-shadow .7s ease-in-out infinite alternate}
-@keyframes loader-hop{from{transform:translateY(0)}to{transform:translateY(-14px)}}
-@keyframes loader-squash{from{transform:scale(1.08,.9)}to{transform:scale(.94,1.06)}}
-@keyframes loader-step{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
-@keyframes loader-pop{0%{opacity:1;transform:scale(1)}50%{opacity:0;transform:scale(1.18)}}
-@keyframes loader-shadow{from{transform:scaleX(1)}to{transform:scaleX(.7)}}
-.loader-title{font:900 22px/1 system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#111}.loader-title span{color:#ff3b30}
-.loader-bar{width:min(240px,64vw);height:16px;border:4px solid #111;border-radius:999px;background:#fff;overflow:hidden}
-.loader-bar b{display:block;height:100%;background:#ff3b30;transform:scaleX(.08);transform-origin:left;transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
-#loader-text{font:800 11px/1.4 system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#111;min-height:1.5em}
-#loader.failed{background:#ff6b5e}#loader.failed .loader-art *{animation:none}
-@media (prefers-reduced-motion:reduce){.loader-art *{animation:none!important}.loader-bar b{transition:none}}
+/* Design tokens for the Pop art direction (see docs/ART-DIRECTION.md). One ground, one ink, one cream for
+   line work on dark, three colour tiers (60-30-10), one radius scale, one shadow, an 8 px spacing grid. */
+:root{--pop-ground:#1d1d28;--pop-ink:#111;--pop-cream:#f3ead6;--pop-muted:#b9b2a2;--pop-card:#fff;--pop-card-text:#111;--pop-card-muted:#4a4637;
+ --pop-base-1:#3f93f7;--pop-base-2:#00b8d6;--pop-hot-1:#ff4f6d;--pop-hot-2:#ff4fb2;--pop-accent-1:#ffde0b;--pop-accent-2:#8def46;
+ --pop-radius-s:10px;--pop-radius-m:16px;--pop-radius-l:22px;--pop-stroke:3px;--pop-stroke-heavy:4px;--pop-shadow:4px 4px 0 var(--pop-ink);--pop-space:8px;--pop-ease:cubic-bezier(.2,.8,.2,1)}
+/* Pop art direction (body.pop): same language as the loading screen — flat yellow ground, black ink,
+   white cards with heavy contours, pill buttons, saturated accents, heavy uppercase type. */
+body.pop{--bg:#1d1d28;--panel:#ffffff;--text:#f3ead6;--muted:#b9b2a2;--mint:#ffde0b;--line:#f3ead6;color:#f3ead6;background:#1d1d28}
+body.pop header{background:none;border-bottom:3px solid #f3ead6}
+body.pop .brand,body.pop .brand-sub,body.pop #status{color:#f3ead6;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+body.pop .brand-sub{color:#ffde0b}body.pop .logo{color:#ff4fb2}
+body.pop .live-dot{background:#8def46;box-shadow:none;border:2px solid #111}
+body.pop button{background:#fff;color:#111;border:3px solid #111;border-radius:999px;font-weight:800;box-shadow:3px 3px 0 #111}
+body.pop button:hover{background:#fff4b8;transform:translate(-1px,-1px);box-shadow:4px 4px 0 #111}
+body.pop button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #111}
+body.pop .panel{background:#fff;backdrop-filter:none;border:4px solid #111;border-radius:22px;box-shadow:8px 8px 0 #111;color:#111}
+body.pop .panel-heading{font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+body.pop .section-label,body.pop .eyebrow{color:#111;font-weight:900}
+body.pop .tag{background:#ff4f6d;color:#fff;border:2px solid #111;border-radius:999px;font-weight:900}
+body.pop .hint,body.pop #preset-description,body.pop output{color:#3d3a2c}
+body.pop .slider-label{color:#111;font-weight:800}
+body.pop .preset.active,body.pop .palette.active,body.pop .harmony.active{background:#ffde0b;color:#111;border-color:#111}
+body.pop .actions .primary{background:#ff4f6d;color:#fff;border-color:#111}
+body.pop input[type=range]{accent-color:#ff4f6d;height:6px}
+body.pop input[type=checkbox]{background:#e6e1c8;border:3px solid #111;width:36px;height:22px}
+body.pop input[type=checkbox]:after{background:#111}
+body.pop input[type=checkbox]:checked{background:#8def46}
+body.pop .swatches i,body.pop .legend i,body.pop .matrix i{border:2px solid #111;box-shadow:none}
+body.pop footer{background:none;color:#f3ead6;font-weight:800;border-top:3px solid #f3ead6}
+body.pop footer strong{color:#ffde0b}
+body.pop kbd{background:#fff;border:2px solid #111;color:#111;border-radius:6px;box-shadow:2px 2px 0 #111}
+body.pop #restore{background:#fff;opacity:.85}
+body.pop #version{color:#b9b2a2}body.pop #version.stale,body.pop #version.fps-low,body.pop #fps.fps-low{color:#d10000}
+body.pop #notice{background:#fff;color:#111;border:3px solid #111;border-radius:14px;box-shadow:5px 5px 0 #111}
+body.pop #start-screen{background:none}
+body.pop #start-simulation{background:#ff4f6d;color:#fff;border:5px solid #111;font-weight:900;text-transform:uppercase;letter-spacing:.06em;font-size:18px;padding:18px 34px;box-shadow:7px 7px 0 #111}
+body.pop #start-simulation:hover{background:#ff6a83;box-shadow:9px 9px 0 #111}
+body.pop #start-simulation::before,body.pop #start-simulation::after{display:none}
+body.pop #start-simulation:focus,body.pop #start-simulation:focus-visible{outline:none}
+body.pop :focus-visible{outline:3px solid #111;outline-offset:3px}
+body.pop .presets{flex-wrap:wrap;gap:7px}body.pop .preset{flex:1 1 28%;border-radius:14px;padding:8px 4px;box-shadow:2px 2px 0 #111}
+body.pop .brand-sub{font-size:12px;margin-left:6px}
+/* Legibility and rhythm: 8 px grid, minimum 11 px text, consistent radii, short ease-out transitions. */
+body.pop .panel{padding:calc(var(--pop-space)*3);border-radius:var(--pop-radius-l)}
+body.pop .panel-heading{font-size:14px;margin-bottom:calc(var(--pop-space)*2)}
+body.pop .section-label{font-size:11px;letter-spacing:.14em;margin:calc(var(--pop-space)*2) 0 var(--pop-space)}
+body.pop .slider-label{font-size:12px}body.pop output{font-size:11px;color:var(--pop-card-muted)}
+body.pop .hint,body.pop #preset-description{font-size:11.5px;line-height:1.45;color:var(--pop-card-muted)}
+body.pop .preset,body.pop .actions button,body.pop .palette{font-size:11px;border-radius:var(--pop-radius-m)}
+body.pop footer{font-size:11px}body.pop kbd{font-size:10px}
+body.pop button,body.pop input[type=checkbox],body.pop input[type=checkbox]:after{transition:transform .15s var(--pop-ease),box-shadow .15s var(--pop-ease),background-color .15s var(--pop-ease)}
+body.pop input[type=range]{margin:calc(var(--pop-space)*1.5) 0 calc(var(--pop-space)*2.5)}
+@media (prefers-reduced-motion:reduce){body.pop button,body.pop input[type=checkbox],body.pop input[type=checkbox]:after{transition:none}body.pop button:hover,body.pop button:active{transform:none}}
+/* Exhibition framing: an opening card (title, statement, credit) and a museum-style wall label that stays
+   discreetly in the corner while the piece runs without interface. */
+#start-screen .start-card{display:flex;flex-direction:column;align-items:center;gap:calc(var(--pop-space)*2);max-width:min(820px,92vw);text-align:center}
+/* Empty centre: the compressed seed of particles waiting for the big bang sits here, framed by the text. */
+.start-seed{height:clamp(150px,24vh,220px);width:1px}
+.start-kicker{margin:0;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--pop-muted)}
+.start-title{margin:0;white-space:nowrap;font:900 clamp(26px,5.4vw,58px)/1 system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;letter-spacing:.02em;text-transform:uppercase;color:var(--pop-cream)}
+.start-title span{color:var(--pop-accent-1)}
+.start-statement{margin:0;font-size:15px;line-height:1.5;color:var(--pop-cream);opacity:.85;max-width:44ch}
+.start-credit{margin:0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--pop-muted)}
+body:not(.pop) .start-kicker,body:not(.pop) .start-title,body:not(.pop) .start-statement,body:not(.pop) .start-credit{color:#edf0ed}
+#wall-label{position:fixed;left:calc(var(--pop-space)*4);bottom:calc(var(--pop-space)*4);z-index:5;pointer-events:none;padding:calc(var(--pop-space)*1.5) calc(var(--pop-space)*2);border-left:3px solid var(--pop-accent-1);color:var(--pop-cream);opacity:0;transform:translateY(6px);transition:opacity .9s var(--pop-ease),transform .9s var(--pop-ease)}
+body.wallpaper:not(.awaiting-start) #wall-label{opacity:.82;transform:none;transition-delay:1.2s}
+body.idle #wall-label{opacity:.82}
+#wall-label p{margin:0}.wl-title{font:900 13px/1.2 system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.wl-meta{font-size:11px;margin-top:2px}.wl-medium{font-size:10.5px;color:var(--pop-muted);margin-top:2px}
+.wl-legend{display:flex;gap:5px;margin-top:8px!important}.wl-legend i{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 0 1.5px var(--pop-ink)}
+@media (max-width:540px){#wall-label{left:var(--pop-space);bottom:var(--pop-space);transform:scale(.9);transform-origin:left bottom}}
+@media (prefers-reduced-motion:reduce){#wall-label{transition:none}}
+
+
+/* While the piece runs without interface nothing is written on screen (version/fps tag only with the UI). */
+body.wallpaper #version{display:none}
+
+/* Opening: only the title and a colourful Start. The button is flat bands of the six palette colours (hard stops,
+   no blending) drifting slowly, with ink contour and hard shadow; the label sits on an ink pill for legibility. */
+body.pop #start-simulation{background:var(--pop-ink);border-width:3px;overflow:hidden;isolation:isolate;padding:5px}
+body.pop #start-simulation::before{display:block;content:"";position:absolute;inset:0 -160px;padding:0;border-radius:0;-webkit-mask:none;mask:none;z-index:-1;background:repeating-linear-gradient(90deg,var(--pop-base-1) 0 22px,var(--pop-base-2) 22px 44px,var(--pop-hot-1) 44px 66px,var(--pop-hot-2) 66px 88px,var(--pop-accent-1) 88px 110px,var(--pop-accent-2) 110px 132px);transform:skewX(-25deg);animation:start-bands 6s linear infinite}
+body.pop #start-simulation span{display:inline-block;padding:11px 26px;border-radius:999px;background:var(--pop-ink);color:var(--pop-cream);border:0}
+body.pop #start-simulation:hover{background:var(--pop-ink)}
+@keyframes start-bands{from{transform:skewX(-25deg) translateX(0)}to{transform:skewX(-25deg) translateX(132px)}}
+@media (prefers-reduced-motion:reduce){body.pop #start-simulation::before{animation:none}}
+
+/* Opening sequence: seed first, then the title, then Start — each appears instantly (no fade). */
+#start-screen .start-title,#start-screen #start-simulation{visibility:hidden}
+body.show-title #start-screen .start-title{visibility:visible}
+body.show-start #start-screen #start-simulation{visibility:visible}
+
+/* Screen post-processing over everything (scene + UI): film grain, scanlines and a rolling band, driven by the
+   Granulado and Linhas de TV sliders (--pp-grain, --pp-scan); UI text gets a light glow (--pp-bloom) and a
+   chromatic fringe that follows the TV effect. The WebGL pass keeps bloom, tracking, fringe and hue jitter. */
+:root{--pp-grain:.4;--pp-scan:.35;--pp-bloom:.6}
+#screen-fx{position:fixed;inset:0;z-index:2147483000;pointer-events:none;overflow:hidden}
+#screen-fx i{position:absolute;inset:0;display:block}
+.fx-grain{inset:-50%!important;opacity:calc(var(--pp-grain)*.32);mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 1.6 -.3'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");animation:fx-grain .5s steps(6) infinite}
+.fx-lines{opacity:calc(var(--pp-scan)*.55);background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.55) 2px 3px)}
+.fx-roll{opacity:calc(var(--pp-scan)*.18);background:linear-gradient(to bottom,transparent 0,rgba(255,255,255,.03) 40%,rgba(255,255,255,.05) 50%,rgba(255,255,255,.03) 60%,transparent 100%);height:40%!important;animation:fx-roll 14s linear infinite}
+@keyframes fx-grain{0%{transform:translate(0,0)}17%{transform:translate(-7%,4%)}33%{transform:translate(5%,-6%)}50%{transform:translate(-4%,-3%)}67%{transform:translate(6%,5%)}83%{transform:translate(-5%,7%)}}
+@keyframes fx-roll{from{transform:translateY(-30vh)}to{transform:translateY(130vh)}}
+body.pop header,body.pop footer,body.pop .panel,body.pop #start-screen,body.pop #restore,body.pop #notice{text-shadow:0 0 calc(10px*var(--pp-bloom)) rgba(255,255,255,calc(.35*var(--pp-bloom))),calc(-1px*var(--pp-scan)*2.4) 0 rgba(255,60,90,calc(.45*var(--pp-scan))),calc(1px*var(--pp-scan)*2.4) 0 rgba(0,200,255,calc(.45*var(--pp-scan)))}
+body.pop .start-title{text-shadow:0 0 calc(26px*var(--pp-bloom)) rgba(255,222,11,calc(.45*var(--pp-bloom))),calc(-2px*var(--pp-scan)*2.4) 0 rgba(255,60,90,calc(.6*var(--pp-scan))),calc(2px*var(--pp-scan)*2.4) 0 rgba(0,200,255,calc(.6*var(--pp-scan)))}
+@media (prefers-reduced-motion:reduce){.fx-grain,.fx-roll{animation:none}}

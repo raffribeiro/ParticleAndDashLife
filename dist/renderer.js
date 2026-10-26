@@ -1,15 +1,15 @@
-import {openingColors} from './opening-colors.js?v=1.30.1';
-import {canvasSize} from './canvas-size.js?v=1.30.1';
-import {FarParticles} from './far-particles.js?v=1.30.1';
-import {splitDrawLayers} from './draw-order.js?v=1.30.1';
-import {EventEffects} from './effects.js?v=1.30.1';
-import {TrailHistory} from './trail-history.js?v=1.30.1';
-import {CurvedTrails} from './curved-trails.js?v=1.30.1';
-import {COLORS} from './simulation.js?v=1.30.1';
-import {Bloom} from './bloom.js?v=1.30.1';
-import {Backdrop} from './backdrop.js?v=1.30.1';
-import {CreatureMesh} from './creature-mesh.js?v=1.30.1';
-import {DEFAULT_PALETTE} from './color.js?v=1.30.1';
+import {openingColors} from './opening-colors.js?v=1.37.2';
+import {canvasSize} from './canvas-size.js?v=1.37.2';
+import {FarParticles} from './far-particles.js?v=1.37.2';
+import {splitDrawLayers} from './draw-order.js?v=1.37.2';
+import {EventEffects} from './effects.js?v=1.37.2';
+import {TrailHistory} from './trail-history.js?v=1.37.2';
+import {CurvedTrails} from './curved-trails.js?v=1.37.2';
+import {COLORS} from './simulation.js?v=1.37.2';
+import {Bloom} from './bloom.js?v=1.37.2';
+import {Backdrop} from './backdrop.js?v=1.37.2';
+import {CreatureMesh} from './creature-mesh.js?v=1.37.2';
+import {DEFAULT_PALETTE} from './color.js?v=1.37.2';
 const STRIP=[-.5,-.5,.5,-.5,-.5,.5,.5,.5];
 const TRIANGLES=[-.5,-.5,.5,-.5,-.5,.5,-.5,.5,.5,-.5,.5,.5];
 export class Renderer {
@@ -29,20 +29,25 @@ export class Renderer {
     float pressure=pow(max(0.,cos(a-time*5.5)),10.)*3.2+sin(a*3.+time*14.)*.8;
     trapped=q/r*pressure+vec2(sin(time*31.+seed*6.2832),cos(time*37.+seed*9.))* .45;
    }
-   vec2 displayed=confined>.5?world*.5+(pos-world*.5+trapped)*.8:pos;
+   // The waiting seed throbs as a whole: fast beat + tremor, and every circle flickers in size on its own.
+   float beat=1.+.13*sin(time*8.)+.07*sin(time*19.7+1.3)+.1*pow(max(0.,sin(time*4.3)),12.);
+   if(confined>.5)local*=1.+.22*sin(time*23.+seed*40.);
+   vec2 displayed=confined>.5?world*.5+(pos-world*.5+trapped)*.8*beat:pos;
    vec2 head=mod(displayed+velocity*prediction,world)/world*vec2(2.,-2.)+vec2(-1.,1.);gl_Position=vec4(head+local/viewport*vec2(2.,-2.),0.,1.);
    // Two passes: hit/pulsing particles (pulse > 0.04) are drawn in the top pass, above bodies and limbs.
    if((pulse>.04?1.:0.)!=layer)gl_Position=vec4(2.,2.,2.,1.);tint=color;e=en;}`));
   gl.attachShader(p,shader(gl.FRAGMENT_SHADER,`
-   precision mediump float;varying vec3 tint;varying float e;varying vec2 local;varying float headSize;varying float stg;varying float prog;varying float seed;varying float pulse;varying float minor;uniform float glow;uniform float emission;uniform float time;
+   precision mediump float;varying vec3 tint;varying float e;varying vec2 local;varying float headSize;varying float stg;varying float prog;varying float seed;varying float pulse;varying float minor;uniform float glow;uniform float emission;uniform float time;uniform float pop;
    void main(){
     // Coordinates in the original particle units (quad is 1.6× larger to fit ripples).
     vec2 p=local*2./headSize*1.6;float d=length(p);float t=prog;float aa=2.4/max(headSize/1.6,8.);
     // Scale-only animation: birth grows from zero with a small overshoot (ease-out-back); later stage
     // changes give a soft pop; elders shrink. No rings, no ripples.
     float c1=1.7,u=t-1.;float grow=stg<.5?max(0.,1.+(c1+1.)*u*u*u+c1*u*u):1.;
-    float pop=stg<.5?1.:1.+.18*exp(-5.*t)*sin(t*14.);float breath=(stg>1.5&&stg<2.5)?1.+.06*sin(time*1.6+seed*6.2832):1.;
-    float R=.36*grow*pop*breath*(stg>2.5?1.-.35*t:1.)*(1.+pulse)*(minor>.5?.1+.4*(minor-1.)/39.:1.);float core=1.-smoothstep(R-aa,R+aa,d);
+    float bump=stg<.5?1.:1.+.18*exp(-5.*t)*sin(t*14.);float breath=(stg>1.5&&stg<2.5)?1.+.06*sin(time*1.6+seed*6.2832):1.;
+    float Rb=.36*grow*bump*breath*(stg>2.5?1.-.35*t:1.)*(minor>.5?.1+.4*(minor-1.)/39.:1.);float sp=pulse*pulse*(3.-2.*pulse);float R=Rb*(1.+.6*sp);float core=1.-smoothstep(R-aa,R+aa,d);
+    // Pop: flat fill inside a black ink contour, fully opaque, no halo or shading.
+    if(pop>.5){float ow=Rb*.24;float outer=1.-smoothstep(R+ow-aa,R+ow+aa,d);if(outer<=0.)discard;vec3 fill=tint*(1.+.15*pulse);fill/=max(1.,max(fill.r,max(fill.g,fill.b)));gl_FragColor=vec4(mix(vec3(.067),fill,core),outer);return;}
     float ring=0.;float flash=0.;
     float halo=exp(-d*d*7.)*(1.-smoothstep(.65,1.,d))*glow*.12*(1.+emission*5.);
     float opacity=clamp((core*.9*(stg>2.5?.75:1.)+halo+ring*.8)*(0.85+e*.15),0.,.97);
@@ -60,7 +65,7 @@ export class Renderer {
   this.palette=COLORS.map(c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16)/255));
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   this.glow=.65;this.trail=.65;this.scale=1;this.showBonds=false;this.bloom=new Bloom(gl,this.instancing);this.backdrop=new Backdrop(gl,this.instancing);this.farParticles=new FarParticles(gl,this.instancing);this.creatures=new CreatureMesh(gl,this.instancing);this.underMesh=new CreatureMesh(gl,this.instancing);this.eventMesh=new CreatureMesh(gl,this.instancing);this.blobMesh=new CreatureMesh(gl,this.instancing);this.effects=new EventEffects();this.setPalette(DEFAULT_PALETTE);this.history=new TrailHistory();this.curves=new CurvedTrails(gl,this.instancing,this.palette);
-  this.uniforms=Object.fromEntries(['world','glow','emission','confined','openingScale','prediction','viewport','time','layer'].map(name=>[name,gl.getUniformLocation(p,name)]));
+  this.uniforms=Object.fromEntries(['world','glow','emission','confined','openingScale','prediction','viewport','time','layer','pop'].map(name=>[name,gl.getUniformLocation(p,name)]));
  }
  // Palette arrays are mutated in place so CurvedTrails keeps its reference.
  setPalette(p){this.paletteInfo=p;p.rgb.forEach((c,i)=>{if(this.palette[i])this.palette[i].splice(0,3,...c);});this.background=p.background;if(p.backdrop)this.backdrop.colors=p.backdrop;this.creatures.palette=p;this.underMesh.palette=p;this.eventMesh.palette=p;if(this.blobMesh)this.blobMesh.palette=p;this.lastX=null;}
@@ -69,14 +74,15 @@ export class Renderer {
   for(const [name,size,offset] of this.attributes){const a=gl.getAttribLocation(this.program,name);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,size,gl.FLOAT,false,this.instancing?32:40,offset);if(this.instancing)this.instancing.vertexAttribDivisorANGLE(a,1);}
   if(this.instancing){gl.bindBuffer(gl.ARRAY_BUFFER,this.quadBuffer);const a=gl.getAttribLocation(this.program,'corner');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);this.instancing.vertexAttribDivisorANGLE(a,0);}
   gl.uniform2f(this.uniforms.world,s.width,s.height);gl.uniform1f(this.uniforms.glow,this.glow*2);gl.uniform1f(this.uniforms.emission,s.openingGlow||0);gl.uniform1f(this.uniforms.openingScale,s.openingScale??1);gl.uniform1f(this.uniforms.confined,s.openingColorMix===0?1:0);
-  gl.uniform1f(this.uniforms.prediction,predict);gl.uniform1f(this.uniforms.time,performance.now()/1000);gl.uniform2f(this.uniforms.viewport,this.cssWidth||s.width,this.cssHeight||s.height);gl.uniform1f(this.uniforms.layer,layer);
+  gl.uniform1f(this.uniforms.prediction,predict);gl.uniform1f(this.uniforms.time,performance.now()/1000);gl.uniform2f(this.uniforms.viewport,this.cssWidth||s.width,this.cssHeight||s.height);gl.uniform1f(this.uniforms.layer,layer);gl.uniform1f(this.uniforms.pop,this.paletteInfo?.pop?1:0);
   if(this.instancing)this.instancing.drawArraysInstancedANGLE(gl.TRIANGLE_STRIP,0,4,s.count);else gl.drawArrays(gl.TRIANGLES,0,s.count*6);
  }
  draw(s,predict=0){
   const gl=this.gl,css=canvasSize(this.canvas,s),dpr=Math.min(devicePixelRatio,1.25)*this.scale,w=Math.max(1,Math.round(css.width*dpr)),h=Math.max(1,Math.round(css.height*dpr));
   this.cssWidth=css.width;this.cssHeight=css.height;
   if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
-  const baseBloom=this.bloom.intensity;this.bloom.intensity=baseBloom*(1+11*(s.openingGlow||0));
+  // Pop keeps post-processing (bloom + grain) but at a gentler bloom so flat shapes stay crisp.
+  const pop=!!this.paletteInfo?.pop,baseBloom=this.bloom.intensity,baseGrain=this.bloom.grain;this.bloom.intensity=baseBloom*(pop?.55:1)*(1+11*(s.openingGlow||0));this.bloom.pop=pop;this.bloom.pixel=dpr;
   const bloom=this.bloom.begin(w,h);if(!bloom&&typeof gl.bindFramebuffer==='function'){gl.bindFramebuffer(gl.FRAMEBUFFER,null);}gl.viewport(0,0,w,h);
   if(this.lastX!==s.x||this.lastWidth!==s.width||this.lastHeight!==s.height||this.lastOpeningColorMix!==(s.openingColorMix??1)){
    const displayPalette=openingColors(this.palette,s.openingColorMix??1);this.curves.palette=displayPalette;
@@ -95,7 +101,7 @@ export class Renderer {
    }
    gl.bufferSubData(gl.ARRAY_BUFFER,0,this.data.subarray(0,s.count*stride));this.history.update(s,performance.now());s.changed=null;this.lastOpeningColorMix=s.openingColorMix??1;this.lastX=s.x;this.lastWidth=s.width;this.lastHeight=s.height;
   }
-  gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);this.backdrop.draw(w,h,performance.now()/1000);if(bloom)this.bloom.foreground();
+  gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);if(!pop)this.backdrop.draw(w,h,performance.now()/1000);else if(bloom){gl.clearColor(...this.background,1);gl.clear(gl.COLOR_BUFFER_BIT);}if(bloom)this.bloom.foreground();
   this.curves.draw(s,this.history,predict,this.trail,this.buffer);
   if(this.layerSource!==s.creatures){this.layers=splitDrawLayers(s.creatures||[]);this.layerSource=s.creatures;}
   this.underMesh.showBonds=this.showBonds;
@@ -112,6 +118,6 @@ export class Renderer {
    items=this.cbItems;}
   if(items.length)this.eventMesh.draw(items,[s.width,s.height],this.glow);
   this.drawParticles(s,predict,1);
-  if(bloom)this.bloom.end(this.background);this.bloom.intensity=baseBloom;
+  if(bloom)this.bloom.end(this.background);this.bloom.intensity=baseBloom;this.bloom.grain=baseGrain;
  }
 }

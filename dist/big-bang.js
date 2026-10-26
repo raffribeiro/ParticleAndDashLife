@@ -28,9 +28,12 @@ export class BigBang{
    sim.gridReady=false;return true;
   }
   if(!this.launched){this.launched=true;const speed=Math.min(sim.width,sim.height)*.018;
-   for(let i=0;i<sim.count;i++){const a=i*2.3999632297+(sim.rng()-.5)*.18,band=i%10,r=sim.rng(),v=speed*(band<2?.18+r*.3:band<8?.55+r*.65:1.45+r*.85);sim.vx[i]=Math.cos(a)*v;sim.vy[i]=Math.sin(a)*v;}
+   // Non-linear blast: each particle gets its own launch speed across an 80% range (slowest = 20% of the fastest,
+   // skewed toward the slow end so a few shards fly far) and its own drag, so the cloud never expands as one shell.
+   this.drag=new Float32Array(sim.count);
+   for(let i=0;i<sim.count;i++){const a=i*2.3999632297+(sim.rng()-.6)*.6,r=Math.pow(sim.rng(),1.6),v=speed*2.1*(.2+.8*r);sim.vx[i]=Math.cos(a)*v;sim.vy[i]=Math.sin(a)*v;this.drag[i]=.035+sim.rng()*.06;}
   }
-  for(let i=0;i<sim.count;i++){sim.x[i]=((sim.x[i]+sim.vx[i]*dt)%sim.width+sim.width)%sim.width;sim.y[i]=((sim.y[i]+sim.vy[i]*dt)%sim.height+sim.height)%sim.height;sim.vx[i]*=Math.exp(-.055*dt);sim.vy[i]*=Math.exp(-.055*dt);}
+  for(let i=0;i<sim.count;i++){sim.x[i]=((sim.x[i]+sim.vx[i]*dt)%sim.width+sim.width)%sim.width;sim.y[i]=((sim.y[i]+sim.vy[i]*dt)%sim.height+sim.height)%sim.height;const k=Math.exp(-(this.drag?.[i]??.055)*dt);sim.vx[i]*=k;sim.vy[i]*=k;}
   sim.gridReady=false;return true;
  }
 }

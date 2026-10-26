@@ -1,6 +1,6 @@
 // Builds procedural creature geometry on the CPU and draws it in one WebGL call.
 // Vertex: x,y | r,g,b,a | u,v,kind. kind 0 membrane strip, 1 halo, 2 membrane fan, 3 glow dot, 5 opaque stroke.
-const STRIDE=9;
+const STRIDE=9,INK=[.067,.067,.067];
 const angleBetween=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 function compile(gl,vs,fs,attrs){const p=gl.createProgram();for(const [t,src] of [[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));gl.attachShader(p,s);}attrs.forEach((a,i)=>gl.bindAttribLocation(p,i,a));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));return p;}
 
@@ -10,12 +10,12 @@ export class CreatureMesh {
   const gl=this.gl;
   this.program=compile(gl,`attribute vec2 pos;attribute vec4 color;attribute vec3 shape;uniform vec2 world;varying vec4 tint;varying vec3 sh;
    void main(){gl_Position=vec4(pos/world*vec2(2.,-2.)+vec2(-1.,1.),0.,1.);tint=color;sh=shape;}`,
-   `precision mediump float;varying vec4 tint;varying vec3 sh;uniform float glow;
+   `precision mediump float;varying vec4 tint;varying vec3 sh;uniform float glow;uniform float pop;
    void main(){
     // Agar cells: crisp flat disc (6) and capsule (7), no glow.
     if(sh.z>5.5){float dd=sh.z<6.5?length(sh.xy):abs(sh.y);gl_FragColor=vec4(clamp(tint.rgb,0.,.98),tint.a*(1.-smoothstep(.9,1.,dd)));return;}
     // Solid strokes: only geometric edge coverage may blend. Life, mood, energy and glow never reduce the fill.
-    if(sh.z>4.5){float edge=1.-smoothstep(.9,1.,abs(sh.y));float shade=.78+.19*(1.-sh.x)+.1*(1.-sh.y*sh.y);gl_FragColor=vec4(clamp(tint.rgb*shade,0.,.98),edge);return;}
+    if(sh.z>4.5){float edge=1.-smoothstep(.9,1.,abs(sh.y));float shade=pop>.5?1.:.78+.19*(1.-sh.x)+.1*(1.-sh.y*sh.y);gl_FragColor=vec4(clamp(tint.rgb*shade,0.,.98),edge);return;}
     float k=sh.z,d=k<.5||(k>.5&&k<1.5)||k>4.5?abs(sh.y):k>3.5?max(abs(sh.x),abs(sh.y)):length(sh.xy),a;
     if(k<.5||(k>1.5&&k<2.5)){float edge=1.-smoothstep(.82,1.,d);float rim=smoothstep(.5,.96,d);a=edge*(.22+.78*rim*rim);}
     else if(k<1.5)a=1.-smoothstep(.15,1.,d);
@@ -23,13 +23,15 @@ export class CreatureMesh {
     else a=1.-smoothstep(.82,1.,d);
     float shade=k>4.5?.78+.19*(1.-sh.x)+.1*(1.-sh.y*sh.y):1.;
     gl_FragColor=vec4(clamp(tint.rgb*shade,0.,.98),tint.a*a*(.75+.5*glow));}`,['pos','color','shape']);
-  this.uWorld=gl.getUniformLocation(this.program,'world');this.uGlow=gl.getUniformLocation(this.program,'glow');this.buffer=gl.createBuffer();
+  this.uWorld=gl.getUniformLocation(this.program,'world');this.uGlow=gl.getUniformLocation(this.program,'glow');this.uPop=gl.getUniformLocation(this.program,'pop');this.buffer=gl.createBuffer();
  }
  ensure(extra){if(this.n*STRIDE+extra*STRIDE>this.data.length){const next=new Float32Array(Math.max(this.data.length*2,(this.n+extra)*STRIDE));next.set(this.data);this.data=next;}}
  vertex(x,y,c,a,u,v,k){const o=this.n++*STRIDE,d=this.data;d[o]=x;d[o+1]=y;d[o+2]=c[0];d[o+3]=c[1];d[o+4]=c[2];d[o+5]=a;d[o+6]=u;d[o+7]=v;d[o+8]=k;}
  // Ribbon along a polyline; width/alpha can be functions of the point index.
  strip(px,py,count,width,color,alpha,kind){
-  if(count<2)return;this.ensure((count-1)*6);let pnx=0,pny=0;const L=[],R=[];
+  if(count<2)return;
+  // Pop art direction: soft glows/halos are dropped; every solid stroke gets a black ink contour drawn first.
+  if(this.palette?.pop&&!this.inking){if(kind!==5)return;this.inking=true;this.strip(px,py,count,typeof width==='function'?i=>width(i)+1.9:width+1.9,INK,1,5);this.inking=false;}this.ensure((count-1)*6);let pnx=0,pny=0;const L=[],R=[];
   for(let i=0;i<count;i++){
    const a=Math.max(0,i-1),b=Math.min(count-1,i+1);let tx=px[b]-px[a],ty=py[b]-py[a];const d=Math.hypot(tx,ty);
    if(d>1e-6){tx/=d;ty/=d;pnx=-ty;pny=tx;}const w=typeof width==='function'?width(i):width;
@@ -41,8 +43,11 @@ export class CreatureMesh {
    this.vertex(L[i*2],L[i*2+1],c0,a0,u0,1,kind);this.vertex(R[i*2],R[i*2+1],c0,a0,u0,-1,kind);this.vertex(L[i*2+2],L[i*2+3],c1,a1,u1,1,kind);
    this.vertex(R[i*2],R[i*2+1],c0,a0,u0,-1,kind);this.vertex(R[i*2+2],R[i*2+3],c1,a1,u1,-1,kind);this.vertex(L[i*2+2],L[i*2+3],c1,a1,u1,1,kind);
   }
+  // Solid strokes get round caps and round joins (a flat disc at every vertex, same width and colour),
+  // so ends are rounded and bends never show miter gaps.
+  if(kind===5){const pop=!!this.palette?.pop,shade=pop?1:.92;for(let i=0;i<count;i++){if(!pop&&i>0&&i<count-1)continue;const w=typeof width==='function'?width(i):width,c=typeof color==='function'?color(i):color,a=typeof alpha==='function'?alpha(i):alpha;if(w>.4&&a>0)this.disc(px[i],py[i],w,shade===1?c:c.map(v=>v*shade),a);}}
  }
- dot(x,y,r,c,a){this.ensure(6);const k=3;this.vertex(x-r,y-r,c,a,-1,-1,k);this.vertex(x+r,y-r,c,a,1,-1,k);this.vertex(x-r,y+r,c,a,-1,1,k);this.vertex(x+r,y-r,c,a,1,-1,k);this.vertex(x+r,y+r,c,a,1,1,k);this.vertex(x-r,y+r,c,a,-1,1,k);}
+ dot(x,y,r,c,a){if(this.palette?.pop){if(a<.4)return;this.ensure(12);this.disc(x,y,r+1.3,INK,1);this.disc(x,y,r,c,1);return;}this.ensure(6);const k=3;this.vertex(x-r,y-r,c,a,-1,-1,k);this.vertex(x+r,y-r,c,a,1,-1,k);this.vertex(x-r,y+r,c,a,-1,1,k);this.vertex(x+r,y-r,c,a,1,-1,k);this.vertex(x+r,y+r,c,a,1,1,k);this.vertex(x-r,y+r,c,a,-1,1,k);}
  // Fan from a centre through rim points; uv runs centre (0) → rim (1) so the membrane shader rims it.
  fan(cx,cy,rim,c,a){const m=rim.length/2;this.ensure(m*3);for(let i=0;i<m;i++){const j=(i+1)%m,ai=i/m*6.2832,aj=j/m*6.2832;this.vertex(cx,cy,c,a,0,0,2);this.vertex(rim[i*2],rim[i*2+1],c,a,Math.cos(ai),Math.sin(ai),2);this.vertex(rim[j*2],rim[j*2+1],c,a,Math.cos(aj),Math.sin(aj),2);}}
  build(list,state){
@@ -56,7 +61,7 @@ export class CreatureMesh {
    if(wk.head){const h=wk.head,nx=-h[5],ny=h[4],x=h[2],y=h[3];
     this.strip([h[0],x],[h[1],y],2,1.6,sp.rim,1,5);
     this.strip([x-h[4]*4+nx*4,x+h[4]*5,x-h[4]*4-nx*4],[y-h[5]*4+ny*4,y+h[5]*5,y-h[5]*4-ny*4],3,1.3,sp.rim,1,5);
-    for(const side of [-1,1])this.dot(x+nx*side*2,y+ny*side*2,1.5,sp.rim,life);
+    // (no eye dots: no circles inside bodies)
    }
    this.wrapCopies(startBody);
    for(let k=0;k<L.length;k+=7){const start=this.n,lift=L[k+6];this.strip([L[k],L[k+2],L[k+4]],[L[k+1],L[k+3],L[k+5]],3,i=>[1.6,1.3,.9][i],sp.rim,1,5);this.dot(L[k+4],L[k+5],2.4+lift*1.8,sp.rim,(.7+.3*lift)*life);this.wrapCopies(start);}}
@@ -142,12 +147,15 @@ export class CreatureMesh {
   this.strip(X,Y,n+2,half,bodyColour,1,5);
   // Age leaves a small, stable signature; the original organism remains recognisable.
   const maturity=c.maturity||0;
-  for(let k=0;k<Math.floor(maturity*5);k++){const i=1+((k*3+c.id)%Math.max(1,n-2));this.dot(x[i],y[i],1.25,sp.accent,.65*bright);}
-  if((!c.role||c.role==='head')&&Number.isFinite(c.gaze)){
+  // Fish mounted as limbs (leg/tail) are plain strokes: no age dots, no stomach contents.
+  const limb=!!c.role&&c.role!=='head';
+  // No circles inside fish, ever: age dots, eyes and stomach dots are not drawn.
+  if(false)for(let k=0;k<Math.floor(maturity*5);k++){const i=1+((k*3+c.id)%Math.max(1,n-2));this.dot(x[i],y[i],1.25,sp.accent,.65*bright);}
+  if(false&&(!c.role||c.role==='head')&&Number.isFinite(c.gaze)){
    const a=c.gaze,nx=-Math.sin(a),ny=Math.cos(a),ux=Math.cos(a),uy=Math.sin(a);
    for(const side of [-1,1])this.dot(x[0]+ux*2+nx*side*2.2,y[0]+uy*2+ny*side*2.2,1.2,sp.rim,.85*bright);
   }
-  if(c.stomach)c.stomach.forEach((t,j)=>{const i=Math.min(n-1,2+j*3),[ux,uy]=[x[Math.max(0,i-1)]-x[i+1>n-1?i:i+1],y[Math.max(0,i-1)]-y[i+1>n-1?i:i+1]],l=Math.hypot(ux,uy)||1;this.box(x[i],y[i],ux/l,uy/l,1.4,1.4,this.palette.species[t].rgb,.95*bright);});
+  if(false)c.stomach.forEach((t,j)=>{const i=Math.min(n-1,2+j*3),[ux,uy]=[x[Math.max(0,i-1)]-x[i+1>n-1?i:i+1],y[Math.max(0,i-1)]-y[i+1>n-1?i:i+1]],l=Math.hypot(ux,uy)||1;this.box(x[i],y[i],ux/l,uy/l,1.4,1.4,this.palette.species[t].rgb,.95*bright);});
  }
  // Abstract living line: tapered glowing stroke along the spine; eaten particles ride along it.
  line(c,sp){
@@ -155,8 +163,8 @@ export class CreatureMesh {
   const w=i=>(1-i/n)*(1.7+.5*foe)+.35+.8*friend*(1-i/n);
   this.strip(x,y,n,i=>w(i)*2.6,sp.deep,i=>(.22+.12*friend)*(1-i/n)*bright,1);
   this.strip(x,y,n,w,i=>i<2?sp.rim:sp.rgb,1,5);
-  if(c.stomach)c.stomach.forEach((t,k)=>{const i=Math.min(n-1,3+k*3);this.dot(x[i],y[i],2.2,this.palette.species[t].rgb,.95*bright);});
-  this.dot(x[0],y[0],2+1.2*foe+(c.hunting?.8:0),foe>.3?sp.accent:sp.rim,(.8+.2*foe)*bright);
+  if(false)c.stomach.forEach((t,k)=>{const i=Math.min(n-1,3+k*3);this.dot(x[i],y[i],2.2,this.palette.species[t].rgb,.95*bright);});
+  if(false)this.dot(x[0],y[0],2+1.2*foe+(c.hunting?.8:0),foe>.3?sp.accent:sp.rim,(.8+.2*foe)*bright);
  }
  // Procedural fish (unused): tail fin (fork / fan / veil), pectoral + pelvic fins, membrane body, pattern, eyes.
  fish(c,sp){
@@ -203,6 +211,6 @@ export class CreatureMesh {
   if(!this.n)return;
   for(const [i,size,off] of [[0,2,0],[1,4,8],[2,3,24]]){gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,size,gl.FLOAT,false,STRIDE*4,off);if(this.instancing)this.instancing.vertexAttribDivisorANGLE(i,0);}
   for(let i=3;i<6;i++)gl.disableVertexAttribArray(i);
-  gl.uniform2f(this.uWorld,world[0],world[1]);gl.uniform1f(this.uGlow,glow);gl.drawArrays(gl.TRIANGLES,0,this.n);
+  gl.uniform2f(this.uWorld,world[0],world[1]);gl.uniform1f(this.uPop,this.palette?.pop?1:0);gl.uniform1f(this.uGlow,glow);gl.drawArrays(gl.TRIANGLES,0,this.n);
  }
 }

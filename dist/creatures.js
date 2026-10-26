@@ -1,5 +1,5 @@
-import {shiftFish} from './body-transform.js?v=1.30.1';
-import {stepSoftStrand} from './soft-strand.js?v=1.30.1';
+import {shiftFish} from './body-transform.js?v=1.37.2';
+import {stepSoftStrand} from './soft-strand.js?v=1.37.2';
 // Procedural fish drawn as literal rectangles: kinematic spines (follow-the-leader with bend limits) steered by
 // explicit world rules. Every rule reads the same world the particles live in:
 //  1 hunger    – seek the prey particle species (same food chain as particles)
@@ -17,8 +17,8 @@ import {stepSoftStrand} from './soft-strand.js?v=1.30.1';
 //                into particles; clustered same-species particles condense into new fish, keeping
 //                the fish count around the target. Biomass (free particles + PER_FISH per fish +
 //                stomach contents) is conserved.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.30.1';
-import {SPECIES_SHARE} from './color.js?v=1.30.1';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.37.2';
+import {SPECIES_SHARE} from './color.js?v=1.37.2';
 export const PER_FISH=4,STOMACH=3,MIN_FREE=40;
 export const SIZE=1.15;
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -111,6 +111,18 @@ export class Creatures {
  apply(sim){if(this.removed.size||this.added.length)sim.rebuild(this.removed,this.added);this.removed=new Set();this.added=[];}
  resize(oldW,oldH,w,h){for(const c of this.list){shiftFish(c,c.x[0]/oldW*w-c.x[0],c.y[0]/oldH*h-c.y[0],false);}}
  // Rule 7: a disturbance pulse scares every fish inside its radius.
+ // Big bang: dashes are born in the core and thrown out with the blast (before regular swimming starts).
+ blast(sim){
+  if(!this.enabled)return;this.removed=new Set();this.added=[];this.started=true;const cx=sim.width/2,cy=sim.height/2,speed=Math.min(sim.width,sim.height)*.018;
+  for(let k=0;k<this.target*8&&this.list.length<this.target;k++){const seed=this.randomFree(sim);if(seed>=0)this.condense(sim,seed,220);}
+  for(const c of this.list){const a=this.rng()*TAU;c.heading=a;c.blastV=speed*2.1*(.2+.8*Math.pow(this.rng(),1.6));c.blastDrag=.035+this.rng()*.06;c.burst=40;
+   // Lay the body out straight along the launch direction, centred on the core.
+   for(let i=0;i<c.x.length;i++){c.x[i]=cx-Math.cos(a)*c.spacing*i;c.y[i]=cy-Math.sin(a)*c.spacing*i;}}
+  this.apply(sim);
+ }
+ drift(sim,dt=1){const W=sim.width,H=sim.height;for(const c of this.list){const v=c.blastV||0;if(v<.05)continue;const dx=Math.cos(c.heading)*v*dt,dy=Math.sin(c.heading)*v*dt;
+  for(let i=0;i<c.x.length;i++){c.x[i]+=dx;c.y[i]+=dy;}if(c.x[0]<0||c.x[0]>=W||c.y[0]<0||c.y[0]>=H){const sx=c.x[0]<0?W:c.x[0]>=W?-W:0,sy=c.y[0]<0?H:c.y[0]>=H?-H:0;for(let i=0;i<c.x.length;i++){c.x[i]+=sx;c.y[i]+=sy;}}
+  c.blastV=v*Math.exp(-(c.blastDrag||.055)*dt);}}
  scare(x,y,radius,w,h){for(const c of this.list){const dx=wrappedDelta(c.x[0]-x,w),dy=wrappedDelta(c.y[0]-y,h),d=Math.hypot(dx,dy);if(d<radius){c.burst=Math.max(c.burst,25+35*(1-d/radius));c.heading=Math.atan2(dy,dx)+(this.rng()-.5)*.6;c.fleeing=true;this.escapes++;}}}
  update(c,sim,pointer){
   // An assembled fish keeps its identity, stomach and lifetime, but its spine is posed

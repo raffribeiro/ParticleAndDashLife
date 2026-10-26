@@ -39,6 +39,7 @@ export const CHROMA_VARIATION=[.94,1.04,.96,1.05,1.03,.95];
 export const SPECIES_SHARE=[.3,.3,.15,.15,.05,.05];
 // Triadic hue triples (120° apart in OKLCH): d = dominant, s = secondary, a = accent.
 export const PALETTES={
+ pop:{name:'Pop',pop:true,d:250,s:5,a:140},
  abyss:{name:'Abissal',d:250,s:130,a:10},
  reef:{name:'Recife',d:200,s:320,a:80},
  aurora:{name:'Aurora',d:160,s:280,a:40},
@@ -49,7 +50,19 @@ export const PALETTES={
 const wrapHue=h=>((h%360)+360)%360;
 const chromaCache=new Map();
 export function maxChroma(L,h){const key=Math.round(L*100)+':'+Math.round(h);let v=chromaCache.get(key);if(v!==undefined)return v;let lo=0,hi=.4;for(let k=0;k<16;k++){const mid=(lo+hi)/2;if(inGamut(oklabToLinearRgb(...oklchToOklab(L,mid,h))))lo=mid;else hi=mid;}chromaCache.set(key,lo);return lo;}
+// Pop art direction: flat vivid fills with black ink contours on a dark, desaturated ground so particles and
+// strokes carry all the colour. 60-30-10 by population: species 0-1 (60%) a cool vivid pair, 2-3 (30%) warm
+// hot pair, 4-5 (10%) the brightest accents. The hue slider rotates the fills in OKLCH; ground and ink stay fixed.
+export const POP_INK=[.067,.067,.067],POP_GROUND=oklchToSrgb(.235,.022,285);
+const POP_FILLS=[[.66,.17,255],[.72,.15,215],[.68,.23,15],[.7,.24,350],[.9,.19,98],[.86,.22,135]];
+function makePopPalette(rotate=0){
+ const species=POP_FILLS.map(([L,C,h],i)=>{const hue=wrapHue(h+rotate),rgb=oklchToSrgb(L,C,hue);
+  // Line work (legs, heads, eyes) takes the species fill; contours are always ink.
+  return {role:i<2?'dominant':i<4?'secondary':'accent',hue,rgb,rim:rgb,deep:POP_INK,accent:[1,1,1]};});
+ return {pop:true,backdrop:[POP_GROUND,POP_GROUND,POP_GROUND],panel:[1,1,1],preset:'pop',triple:{d:PALETTES.pop.d,s:PALETTES.pop.s,a:PALETTES.pop.a},rotate,species,colors:species.map(s=>toHex(s.rgb)),rgb:species.map(s=>s.rgb),background:POP_GROUND};
+}
 export function makePalette(preset='abyss',rotate=0){
+ if(preset==='pop'||preset?.pop)return makePopPalette(rotate);
  const P=typeof preset==='string'?(PALETTES[preset]||PALETTES.abyss):preset,hues=[P.d,P.d,P.s,P.s,P.a,P.a];
  // Vivid roles are built accent → secondary → dominant so each tier's chroma is capped by the tier above
  // (sRGB cannot hold very light + very saturated for some hues); keeps the 60-30-10 hierarchy.

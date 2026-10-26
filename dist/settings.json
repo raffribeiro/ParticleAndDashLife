@@ -1,49 +1,100 @@
 {
-  "version": "1.30.1",
-  "saved": "2026-10-22T16:20:15.160Z",
-  "inputs": {
-    "population": "600",
-    "radius": "150",
-    "force": "1.5",
-    "inertia": "100",
-    "glow": "100",
-    "trail": "0",
-    "wiggle": "200",
-    "bloom": "160",
-    "grain": "40",
-    "hue": "0",
-    "palette-auto": true,
-    "palette-interval": "45",
-    "ecology": true,
-    "bonding": true,
-    "behavior-auto": false,
-    "behavior-interval": "30",
-    "combat-enabled": true,
-    "walkers-enabled": true,
-    "dynamic-mobility": true,
-    "creatures-enabled": true,
-    "creature-count": "30",
-    "creature-mood": true,
-    "mood-period": "15",
-    "creature-wake": true,
-    "disturbance-enabled": true,
-    "disturbance-interval": "20",
-    "disturbance-strength": "60",
-    "screensaver": true
+ "version": "1.35.0",
+ "saved": "2026-10-24T18:11:06.602Z",
+ "inputs": {
+  "population": "1400",
+  "radius": "150",
+  "force": "1.5",
+  "inertia": "100",
+  "glow": "100",
+  "trail": "0",
+  "wiggle": "200",
+  "bloom": "160",
+  "grain": "40",
+  "scanlines": "35",
+  "hue": "-21",
+  "palette-auto": true,
+  "palette-interval": "45",
+  "ecology": true,
+  "bonding": true,
+  "behavior-auto": false,
+  "behavior-interval": "30",
+  "combat-enabled": true,
+  "walkers-enabled": true,
+  "dynamic-mobility": true,
+  "creatures-enabled": true,
+  "creature-count": "30",
+  "creature-mood": true,
+  "mood-period": "15",
+  "creature-wake": true,
+  "disturbance-enabled": true,
+  "disturbance-interval": "20",
+  "disturbance-strength": "60",
+  "screensaver": true
+ },
+ "behavior": {
+  "mode": "symbiosis",
+  "matrix": [
+   [
+    0.32,
+    0.65,
+    -0.22,
+    -0.22,
+    -0.22,
+    0.18
+   ],
+   [
+    0.18,
+    0.32,
+    0.65,
+    -0.22,
+    -0.22,
+    -0.22
+   ],
+   [
+    -0.22,
+    0.18,
+    0.32,
+    0.65,
+    -0.22,
+    -0.22
+   ],
+   [
+    -0.22,
+    -0.22,
+    0.18,
+    0.32,
+    0.65,
+    -0.22
+   ],
+   [
+    -0.22,
+    -0.22,
+    -0.22,
+    0.18,
+    0.32,
+    0.65
+   ],
+   [
+    0.65,
+    -0.22,
+    -0.22,
+    -0.22,
+    0.18,
+    0.32
+   ]
+  ]
+ },
+ "palette": {
+  "preset": "pop",
+  "triple": {
+   "name": "Lima, rosa e azul",
+   "d": 240,
+   "s": 0,
+   "a": 120
   },
-  "behavior": {
-    "mode": "symbiosis"
-  },
-  "palette": {
-    "preset": "generated",
-    "triple": {
-      "name": "Lima, rosa e azul",
-      "d": 240,
-      "s": 0,
-      "a": 120
-    },
-    "rotate": 0,
-    "auto": true,
-    "interval": 45
-  }
+  "rotate": -21,
+  "auto": true,
+  "interval": 45
+ }
 }

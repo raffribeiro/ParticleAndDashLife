@@ -1,11 +1,11 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.30.1';
-import {featureLevel} from './features.js?v=1.30.1';
-import {factionOf,FACTION_OF} from './combat.js?v=1.30.1';
+import {stepSoftStrand} from './soft-strand.js?v=1.37.2';
+import {featureLevel} from './features.js?v=1.37.2';
+import {factionOf,FACTION_OF} from './combat.js?v=1.37.2';
 // Walkers: bonded particle clusters that grow line legs and walk.
 // Every FORM_EVERY steps, connected bond components of ≥3 particles may become walkers.
 // Legs hang from the cluster's outer particles (2-bone IK), step in alternating groups,
 // and push the cluster during each stride. Anatomy fades as its connected body falls apart.
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.30.1';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.37.2';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Size sets the general speed (small = fast, big = slow); the pace gene adds individual variation on top.
 export const sizePace=n=>Math.max(.3,Math.min(1.3,Math.pow(4/Math.max(1,n),.65)));
@@ -166,7 +166,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
    return m;};
   // Pace gene: log-uniform 0.35×–2.4×, so organisms move at clearly different speeds.
   const w={id:this.nextId++,pace:Math.exp(Math.log(.35)+rng()*Math.log(2.4/.35)),plan,parts,members:[...members],heading:rng()*TAU,wander:0,age:0,lifespan:2400+rng()*2400,phase:0,cohesion:0,tail:null,
-   legs:outer.slice(0,legCount).map((hip,k)=>({hip,tentacle:legPlan(k)==='jelly',mount:mountFor(k),group:legPlan(k)==='centipede'?(k>>1)%2^(k%2):k%2,upper:size,lower:size*1.15,stride:size*.9,t:1,fx:sim.x[hip],fy:sim.y[hip],from:[0,0],to:[0,0],init:false,knee:[0,0],lift:0,bend:k%2?1:-1}))};
+   legs:outer.slice(0,legCount).map((hip,k)=>({hip,tentacle:legPlan(k)==='jelly',mount:mountFor(k),group:legPlan(k)==='centipede'?(k>>1)%2^(k%2):k%2,upper:size,lower:size*1.15,stride:size*.9,t:1,fx:sim.x[hip],fy:sim.y[hip],from:[0,0],to:[0,0],init:false,knee:[sim.x[hip],sim.y[hip]],lift:0,bend:k%2?1:-1}))};
   this.list.push(w);this.formed++;return w;
  }
  merge(a,b,sim,fish,bridge=null){
@@ -442,6 +442,10 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
     const score=Math.max(dist/l.stride,extension/.84);
     if((dist>l.stride||extension>.84)&&score>urgency){urgency=score;candidate={l,px,py,rx,ry};}
    }
+   // Leash: a foot left behind (fast body, shove, drag, waiting for its turn) slides along instead of stretching
+   // the leg across the screen; it re-plants from the leashed spot on its next step.
+   {const fx=wrappedDelta(l.fx-px,W),fy=wrappedDelta(l.fy-py,H),d=Math.hypot(fx,fy),max=(l.upper+l.lower)*1.15;
+    if(d>max){const k=max/d;l.fx=px+fx*k;l.fy=py+fy*k;if(l.t<1&&l.to){l.to=[l.fx,l.fy];l.from=[l.fx,l.fy];}}}
    l.lift=l.t<1?Math.sin(Math.PI*l.t):0;
    l.knee=solveKnee(px,py,px+wrappedDelta(l.fx-px,W),py+wrappedDelta(l.fy-py,H),l.upper,l.lower,l.bend);
   }
@@ -480,7 +484,10 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
  }
  serialize(sim){
   return this.list.map(w=>{const legs=new Float32Array(w.legs.length*7);w.legs.forEach((l,k)=>{const [px,py]=this.hipPosition(w,l,sim),W=sim.width,H=sim.height;
-   legs.set([px,py,px+wrappedDelta(l.knee[0]-px,W),py+wrappedDelta(l.knee[1]-py,H),px+wrappedDelta(l.fx-px,W),py+wrappedDelta(l.fy-py,H),l.lift],k*7);});
+   // Never draw a leg longer than it can reach (fresh legs, teleports): fold it onto the hip instead of a screen-wide streak.
+   let kx=wrappedDelta(l.knee[0]-px,W),ky=wrappedDelta(l.knee[1]-py,H),fx=wrappedDelta(l.fx-px,W),fy=wrappedDelta(l.fy-py,H);const reach=(l.upper+l.lower)*1.3;
+   if(!(Math.hypot(kx,ky)<=reach)||!(Math.hypot(fx,fy)<=reach)){kx=ky=fx=fy=0;}
+   legs.set([px,py,px+kx,py+ky,px+fx,py+fy,l.lift],k*7);});
    const a=w.anatomy;
    const head=a?new Float32Array([a.cx,a.cy,a.cx+a.hx*a.bodyLength*.7,a.cy+a.hy*a.bodyLength*.7,a.hx,a.hy]):null;
    const tail=w.tail?new Float32Array(w.tail.flat()):null;
