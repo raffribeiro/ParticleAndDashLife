@@ -22,6 +22,14 @@ A pasta `dist/` contém o aplicativo estático, sem dependências externas. WebG
 
 No GitHub Pages, as preferências são salvas neste navegador. O servidor local opcional `serve.py` também permite gravar as preferências em arquivo.
 
+## Desempenho automático
+
+“Priorizar 60 fps” vem ligado. Após a explosão, o app aquece por 1,5 s e calibra usando três janelas da cena em movimento. Continua medindo os frames renderizados, o p95 do intervalo dos quadros, o custo de desenho e o custo da física. Pausa e tempo em segundo plano não entram na medição.
+
+Há sete níveis: resolução de 100% a 25%, bloom com menos passes, textura estática, redução dos rastros e, nos níveis de emergência, pós-processamento desligado. As partículas, criaturas, identidades e configurações salvas não são removidas ou sobrescritas. A física permanece a 60 Hz quando o aparelho suporta. Os efeitos voltam gradualmente após estabilidade prolongada, evitando alternância constante.
+
+Abra os controles com F para ver o FPS medido, o nível ativo, desativar o ajuste ou recalibrar. A medição é local, sem cadastro nem envio de benchmark. 60 fps é uma meta: tela abaixo de 60 Hz, CPU/GPU insuficiente, economia de energia e aquecimento podem impedir atingi-la; o painel informa quando a simulação ou aparelho chegam ao limite.
+
 ## Animação da abertura
 
 As letras e o botão usam curvas de `spring()` e `interpolate()` do Remotion, pré-calculadas em `dist/opening-motion-data.js`. O navegador reproduz os keyframes com Web Animations; o botão permanece HTML interativo e a simulação não carrega React nem um player de vídeo. A entrada respeita a preferência por movimento reduzido.

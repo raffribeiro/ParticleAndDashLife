@@ -16,6 +16,11 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 11. **Feedback só por escala.** Golpes, nascimento, perturbação e ondas são escala das próprias partículas. Sem anéis, faíscas ou overlays desenhados.
 12. **Movimento.** Transições de UI 150 ms ease-out (`--pop-ease`); respeitar `prefers-reduced-motion`.
 
+## Adaptação de desempenho
+- Preservar população, identidades e silhuetas. O alvo de 60 fps tem prioridade sobre resolução, passos de bloom, granulado/VHS animados e rastros em aparelhos lentos.
+- Ajustes automáticos são limites temporários; nunca sobrescrever os controles salvos do usuário. Recuperar qualidade somente após estabilidade prolongada.
+- Resultado da calibração fica no painel de controles, sem adicionar texto sobre a obra em modo wallpaper.
+
 ## Interface
 - Linhas e textos sobre o fundo escuro: creme `#f3ead6` (secundário `#b9b2a2`). Destaques: amarelo `#ffde0b`. Ação principal: coral `#ff4f6d`.
 - Cartões: branco, contorno 4 px tinta, sombra dura `4px 4px 0` tinta, raio 22 px. Botões: pílula/16 px, contorno 3 px, sombra dura que "afunda" no clique.

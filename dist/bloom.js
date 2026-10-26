@@ -54,16 +54,18 @@ export class Bloom {
  }
  release(){const gl=this.gl;for(const t of [this.scene,this.backdrop,...this.levels])if(t){gl.deleteFramebuffer(t.fb);gl.deleteTexture(t.tex);}this.scene=null;this.backdrop=null;this.levels=[];}
  resize(w,h){
-  if(w===this.w&&h===this.h&&this.scene)return true;this.release();this.w=w;this.h=h;
+  const count=Math.max(2,Math.min(5,this.levelCount||5));if(w===this.w&&h===this.h&&this.scene&&this.builtLevelCount===count)return true;this.builtLevelCount=count;this.release();this.w=w;this.h=h;
   this.scene=this.target(w,h,this.gl.UNSIGNED_BYTE);if(!this.scene){this.ok=false;return false;}
   this.backdrop=this.target(w,h,this.gl.UNSIGNED_BYTE);if(!this.backdrop){this.ok=false;this.release();return false;}
   let type=this.halfType;let lw=Math.max(1,w>>1),lh=Math.max(1,h>>1);
-  for(let i=0;i<5&&lw>=4&&lh>=4;i++){let t=type?this.target(lw,lh,type):null;if(!t){type=null;t=this.target(lw,lh,this.gl.UNSIGNED_BYTE);}if(!t)break;this.levels.push(t);lw=Math.max(1,lw>>1);lh=Math.max(1,lh>>1);}
+  for(let i=0;i<count&&lw>=4&&lh>=4;i++){let t=type?this.target(lw,lh,type):null;if(!t){type=null;t=this.target(lw,lh,this.gl.UNSIGNED_BYTE);}if(!t)break;this.levels.push(t);lw=Math.max(1,lw>>1);lh=Math.max(1,lh>>1);}
   if(this.levels.length<2){this.ok=false;this.release();return false;}
   return true;
  }
  // Returns true when the scene should be drawn into the bloom FBO.
  begin(w,h){
+  // A smaller target can succeed after transient GPU memory pressure. Do not retry every frame.
+  if(!this.ok&&this.composite&&(w!==this.w||h!==this.h))this.ok=true;
   if(!this.ok||(this.intensity<=0&&this.grain<=0&&!(this.scan>0)))return false;if(!this.resize(w,h))return false;
   const gl=this.gl;gl.bindFramebuffer(gl.FRAMEBUFFER,this.backdrop.fb);gl.viewport(0,0,w,h);return true;
  }

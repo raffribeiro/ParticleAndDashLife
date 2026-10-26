@@ -1,16 +1,17 @@
-import {prepareOpening} from './opening-motion.js?v=1.38.0';
+import {PerformanceGovernor} from './performance.js?v=1.39.0';
+import {prepareOpening} from './opening-motion.js?v=1.39.0';
 window.lumaOpening=prepareOpening();
-import {SceneGesture} from './scene-interaction.js?v=1.38.0';
-import {BigBang} from './big-bang.js?v=1.38.0';
-import {mergeChanged} from './pending-changes.js?v=1.38.0';
-import {DoubleTap} from './tap-gesture.js?v=1.38.0';
-import {canvasSize} from './canvas-size.js?v=1.38.0';
-import {FrameClock} from './timing.js?v=1.38.0';
+import {SceneGesture} from './scene-interaction.js?v=1.39.0';
+import {BigBang} from './big-bang.js?v=1.39.0';
+import {mergeChanged} from './pending-changes.js?v=1.39.0';
+import {DoubleTap} from './tap-gesture.js?v=1.39.0';
+import {canvasSize} from './canvas-size.js?v=1.39.0';
+import {FrameClock} from './timing.js?v=1.39.0';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.38.0';
+let lowFps=0,lowUntil=0;export const VERSION='1.39.0';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.38.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.38.0';import {Renderer} from './renderer.js?v=1.38.0';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.39.0';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.39.0';import {Renderer} from './renderer.js?v=1.39.0';
 const $=id=>document.getElementById(id),canvas=$('universe');window.lumaLoader?.set(.45,'Preparando a GPU');let renderer;try{renderer=new Renderer(canvas);}catch(e){window.lumaLoader?.fail('Este navegador não conseguiu iniciar o WebGL.');$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 window.lumaLoader?.set(.62,'Iniciando a simulação');let loaderSnapshot=false;
 const s=new Simulation(300,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');
@@ -19,8 +20,11 @@ const disturbance={enabled:true,interval:20,strength:.6,pulseOnly:true};let bond
 let mobilityMin=1,mobilityMax=1;let matrixRevision=0,lastBehaviorPaint=0;const behaviorConfig={enabled:false,interval:30};
 const creatureConfig={enabled:true,count:30,wake:true,mood:true,moodPeriod:45};let creatureStats=null,wiggle=2;
 // Pop is the default art direction (matches the loading screen); other palettes keep the dark glow look.
-const paletteState={rotate:0,preset:'pop',triple:{...OPENING_PALETTE},auto:true,interval:45};let livePalette=null,paletteFrom=null,paletteTo=null,paletteT0=0,nextPaletteAt=0,lastPaletteTick=0;const PALETTE_FADE=6000;let renderScale=1,slowWindows=0,fastWindows=0,idleTimer=null;
+const paletteState={rotate:0,preset:'pop',triple:{...OPENING_PALETTE},auto:true,interval:45};let livePalette=null,paletteFrom=null,paletteTo=null,paletteT0=0,nextPaletteAt=0,lastPaletteTick=0;const PALETTE_FADE=6000;let renderScale=1,idleTimer=null;
 // 60 fps render, matched to the 60 Hz physics in the worker.
+const governor=new PerformanceGovernor();
+function applyQuality(){const q=governor.quality;renderer.quality=q;renderer.scale=renderScale=q.scale;document.body.dataset.performanceTexture=q.texture;needsRender=true;}
+applyQuality();
 const clock=new FrameClock(60);let started=false,settingsReady=false,openingRevision=null;let revision=0,snapshotAt=performance.now(),stepMs=0;
 const worker=new Worker(new URL('./worker.js?v='+VERSION,import.meta.url),{type:'module'});
 function sync(){worker.postMessage({kind:'config',matrixRevision,behaviorKey:current,behaviorCycle:behaviorConfig,creatures:creatureConfig,wiggle,bonding,walkers:walkerConfig,combat:combatConfig,disturbance,inertia:s.inertia,dynamicMobility:s.dynamicMobility,paused,visible:!document.hidden,pointer,matrix:s.matrix,radius:s.radius,force:s.force,ecology:s.ecology,width:requestedSize.width,height:requestedSize.height});}
@@ -57,6 +61,8 @@ $('palette-auto').onchange=e=>{paletteState.auto=e.target.checked;nextPaletteAt=
 $('palette-interval').oninput=e=>{paletteState.interval=+e.target.value;$('palette-interval-value').textContent=e.target.value+' s';nextPaletteAt=0;};
 function matrix(){const el=$('matrix');el.replaceChildren();el.append(document.createElement('span'));for(const c of COLORS){const i=document.createElement('i');i.style.background=c;el.append(i);}s.matrix.forEach((row,a)=>{const i=document.createElement('i');i.style.background=COLORS[a];el.append(i);row.forEach((v,b)=>{const button=document.createElement('button');button.textContent=(v>0?'+':'')+v.toFixed(1);button.style.background=v>0?`rgba(119,221,169,${Math.abs(v)*.24+.03})`:`rgba(196,137,180,${Math.abs(v)*.24+.03})`;button.setAttribute('aria-label',`Espécie ${a+1} para ${b+1}: ${v.toFixed(1)}`);button.onclick=()=>{matrixRevision++;current='custom';s.matrix[a][b]=v<-.1?0:v<.1?.7:-.7;document.querySelectorAll('.preset').forEach(p=>p.classList.remove('active'));$('preset-description').textContent='Afinidades personalizadas. Observe o que muda.';matrix();$('matrix').querySelectorAll('button')[a*6+b].focus();};el.append(button);});});}
 function preset(key){if(key==='random'){behaviorConfig.enabled=true;behaviorConfig.kick=Date.now();document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset==='random'));$('preset-description').textContent='Alterna entre Simbiose, Correntes, Predador e presa e Colônias a cada '+behaviorConfig.interval+' s, com transição suave.';sync();return;}behaviorConfig.enabled=false;matrixRevision++;current=key;s.preset(key);document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===key));$('preset-description').textContent=PRESETS[key].description;matrix();}document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>preset(b.dataset.preset));preset(current);applyPalette();
+$('auto-quality').onchange=e=>{governor.setEnabled(e.target.checked);applyQuality();};
+$('recalibrate').onclick=()=>{governor.level=0;governor.restart();applyQuality();};
 $('start-simulation').onclick=()=>{if(started)return;started=true;window.lumaOpening?.stop();paused=false;lastPaletteTick=0;nextPaletteAt=0;$('start-screen').hidden=true;document.body.classList.remove('awaiting-start');$('start-simulation').blur();needsRender=true;updatePause();sync();};
 function updatePause(){ $('pause').textContent=paused?'▶ Continuar':'Ⅱ Pausar';$('status').textContent=paused?'Universo em pausa':'Universo em movimento';}function togglePause(){paused=!paused;accumulator=0;sync();updatePause();}updatePause();$('pause').onclick=togglePause;
 $('reset').onclick=()=>s.reset();// Random behavior: a fresh affinity matrix; a click on Aleatório again draws another.
@@ -112,25 +118,22 @@ canvas.onpointercancel=canvas.onlostpointercapture=()=>{if(sceneGesture.pointer)
 window.addEventListener('blur',cancelGesture);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelGesture();});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();paused=true;updatePause();$('notice').textContent='A GPU interrompeu a renderização. Recarregue para continuar.';$('notice').style.display='block';});
-document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;sample=performance.now();frames=0;needsRender=true;clock.reset();sync();});
+document.addEventListener('visibilitychange',()=>{last=0;accumulator=0;sample=performance.now();frames=0;needsRender=true;clock.reset();governor.sample(performance.now(),{active:false});sync();});
 for(const event of ['click','input','change','keydown'])document.addEventListener(event,()=>{needsRender=true;sync();});
-function resizeCanvas(){const next=canvasSize(canvas);if(next.width===requestedSize.width&&next.height===requestedSize.height)return;cancelGesture();requestedSize=next;pointer=null;needsRender=true;sync();}
+function resizeCanvas(){const next=canvasSize(canvas);if(next.width===requestedSize.width&&next.height===requestedSize.height)return;cancelGesture();governor.restart();requestedSize=next;pointer=null;needsRender=true;sync();}
 const canvasObserver=new ResizeObserver(resizeCanvas);canvasObserver.observe(canvas);window.addEventListener('resize',resizeCanvas);
-function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(now))return;stepPalette(now);if(!paused||needsRender){renderer.draw(s,paused?0:Math.min(1.5,(now-snapshotAt)/(1000/60)));needsRender=false;if(loaderSnapshot&&settingsReady)window.lumaLoader?.done();if(started&&settingsReady&&openingRevision===revision&&!paused&&!document.hidden){const readyRevision=openingRevision;openingRevision=null;requestAnimationFrame(()=>worker.postMessage({kind:'start-opening',revision:readyRevision}));}}frames++;if(!sample)sample=now;if(now-sample>=1000){const fps=frames*1000/(now-sample);$('fps').textContent=Math.round(fps);
+function tick(now){requestAnimationFrame(tick);if(document.hidden||!clock.due(now))return;stepPalette(now);let didDraw=false;if(!paused||needsRender){const drawStart=performance.now();renderer.draw(s,paused?0:Math.min(1.5,(now-snapshotAt)/(1000/60)));didDraw=true;const drawMs=performance.now()-drawStart;needsRender=false;if(governor.sample(now,{active:started&&!paused&&s.openingColorMix>=1,drawMs,stepMs}))applyQuality();if(loaderSnapshot&&settingsReady)window.lumaLoader?.done();if(started&&settingsReady&&openingRevision===revision&&!paused&&!document.hidden){const readyRevision=openingRevision;openingRevision=null;requestAnimationFrame(()=>worker.postMessage({kind:'start-opening',revision:readyRevision}));}}if(didDraw)frames++;if(!sample)sample=now;if(now-sample>=1000){const fps=frames*1000/(now-sample);$('fps').textContent=Math.round(fps);
    // fps watch: below 60 (57.5 to ignore 1-frame jitter) the counter and the corner tag turn red; drops are logged to the local server.
    {const low=!paused&&!document.hidden&&fps<57.5,tag=$('version');$('fps').classList.toggle('fps-low',low);
     if(low){lowFps=Math.round(fps);lowUntil=now+4000;if(!location.hostname.endsWith('github.io'))fetch('/fps-log',{method:'POST',body:JSON.stringify({fps:lowFps,scale:renderScale,stepMs:+stepMs.toFixed(1),count:s.count,orgs:s.walkers?.length||0,v:VERSION})}).catch(()=>{});}
     if(tag&&!tag.classList.contains('stale')){const show=now<lowUntil;tag.classList.toggle('fps-low',show);tag.textContent='v'+VERSION+(show?' · '+lowFps+' fps':'');}}
-   // Adaptive resolution: drop render scale when frames are missed, recover when there is headroom. Population is never changed.
-   if(!paused){if(fps<52){slowWindows++;fastWindows=0;}else if(fps>=58.5){fastWindows++;slowWindows=0;}else{slowWindows=fastWindows=0;}
-    if(slowWindows>=2&&renderScale>.5){renderScale=Math.max(.5,+(renderScale-.15).toFixed(2));renderer.scale=renderScale;slowWindows=0;}
-    else if(fastWindows>=6&&renderScale<1){renderScale=Math.min(1,+(renderScale+.1).toFixed(2));renderer.scale=renderScale;fastWindows=0;}}
-   $('fps').title='Física: '+stepMs.toFixed(1).replace('.',',')+' ms por atualização · resolução '+Math.round(renderScale*100)+'%';$('creature-status').textContent=creatureSummary();$('combat-status').textContent=combatSummary();$('count').textContent=fmt(s.count);$('bond-status').textContent=bonding?fmt((s.bonds?.length||0)/2)+' ligações':'Desligadas';$('walker-status').textContent=walkerSummary();if(creatureStats){const st=creatureStats;$('mood-status').textContent=!creatureConfig.mood?'Sempre inimigos':(st.friends+' amigos · '+(st.fish-st.friends)+' inimigos');}$('palette-status').textContent=paletteState.auto?(paletteTo?'Transição em curso':'Próxima em '+Math.max(0,Math.ceil((nextPaletteAt-now)/1000))+' s'):'Automático desligado';frames=0;sample=now;$('mobility-range').textContent=s.dynamicMobility?mobilityMin.toFixed(2).replace('.',',')+'–'+mobilityMax.toFixed(2).replace('.',',')+'×':'Uniforme · 1,00×';$('disturbance-status').textContent=disturbance.enabled?(disturbance.pulseOnly||disturbanceCount%2===0?'Pulso':'Afinidades')+' em '+Math.ceil(nextDisturbance)+' s':'Automático desligado';$('feeding').textContent=s.ecology?' / '+fmt(s.consumed)+' trocas':'';}}
+   $('performance-status').textContent=started?governor.summary:'O teste começa após a explosão';
+   $('fps').title='Física: '+stepMs.toFixed(1).replace('.',',')+' ms por atualização · resolução '+Math.round(renderScale*100)+'% · quadro p95 '+governor.frameMs.toFixed(1)+' ms';$('creature-status').textContent=creatureSummary();$('combat-status').textContent=combatSummary();$('count').textContent=fmt(s.count);$('bond-status').textContent=bonding?fmt((s.bonds?.length||0)/2)+' ligações':'Desligadas';$('walker-status').textContent=walkerSummary();if(creatureStats){const st=creatureStats;$('mood-status').textContent=!creatureConfig.mood?'Sempre inimigos':(st.friends+' amigos · '+(st.fish-st.friends)+' inimigos');}$('palette-status').textContent=paletteState.auto?(paletteTo?'Transição em curso':'Próxima em '+Math.max(0,Math.ceil((nextPaletteAt-now)/1000))+' s'):'Automático desligado';frames=0;sample=now;$('mobility-range').textContent=s.dynamicMobility?mobilityMin.toFixed(2).replace('.',',')+'–'+mobilityMax.toFixed(2).replace('.',',')+'×':'Uniforme · 1,00×';$('disturbance-status').textContent=disturbance.enabled?(disturbance.pulseOnly||disturbanceCount%2===0?'Pulso':'Afinidades')+' em '+Math.ceil(nextDisturbance)+' s':'Automático desligado';$('feeding').textContent=s.ecology?' / '+fmt(s.consumed)+' trocas':'';}}
 sync();
 
 requestAnimationFrame(tick);
 // Read-only observability for browser verification.
-window.luma={get stats(){return {count:s.count,paused,consumed:s.consumed,finite:s.x.every(Number.isFinite),preset:current,stepMs,worker:true,creatures:creatureStats,renderScale,bloom:renderer.bloom.ok,palette:[...COLORS]};}};
+window.luma={get stats(){return {count:s.count,paused,consumed:s.consumed,finite:s.x.every(Number.isFinite),preset:current,stepMs,worker:true,creatures:creatureStats,renderScale,performance:{level:governor.level,fps:governor.fps,p95:governor.frameMs,calibrated:governor.calibrated,limited:governor.limited,quality:governor.quality.name},bloom:renderer.bloom.ok,palette:[...COLORS]};}};
 
 // Save / restore: every panel control, behavior (preset, Aleatório or custom matrix) and palette.
 // Stored on the local server (settings.json, survives restarts and cache clears) with localStorage as backup.

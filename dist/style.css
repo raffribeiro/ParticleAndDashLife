@@ -148,3 +148,10 @@ body.pop .start-title{text-shadow:0 0 calc(26px*var(--pp-bloom)) rgba(255,222,11
 .opening-animated .opening-letter,.opening-animated #start-simulation{will-change:transform}
 #start-simulation:disabled{cursor:default}
 @media(max-height:480px){#start-screen .start-title{top:24px;font-size:clamp(24px,5vw,42px)}#start-screen #start-simulation{top:calc(50% + 40px)}}
+
+/* Automatic quality caps never overwrite the user's saved effect controls. */
+body[data-performance-texture="static"] .fx-grain,body[data-performance-texture="static"] .fx-roll{animation:none}
+body[data-performance-texture="static"] .fx-roll{display:none}
+body[data-performance-texture="off"] #screen-fx{display:none}
+body[data-performance-texture="off"]{--pp-bloom:0;--pp-scan:0}
+#performance-status{max-width:210px}#recalibrate{margin:0 0 12px;font-size:11px}

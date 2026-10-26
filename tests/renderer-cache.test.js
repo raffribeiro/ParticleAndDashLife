@@ -16,3 +16,13 @@ test('opening emissive boosts bloom for the frame without changing the user sett
 test('opening transition changes particle colours without changing species or the target palette',async()=>{const {ATLAS_OPENING_COLORS}=await import('../dist/opening-colors.js');globalThis.devicePixelRatio=1;const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(_,n)=>n},{get:(o,k)=>k in o?o[k]:(()=>({}))}),r=new Renderer({width:0,height:0,getContext:()=>gl}),s=new Simulation(2,400,300);s.type.fill(0);const target=[...r.palette[0]];s.openingColorMix=0;r.draw(s);for(let i=0;i<3;i++)assert.ok(Math.abs(r.data[(r.instancing?2:4)+i]-ATLAS_OPENING_COLORS[0][i])<1e-6);s.openingColorMix=1;r.draw(s);for(let i=0;i<3;i++)assert.ok(Math.abs(r.data[(r.instancing?2:4)+i]-target[i])<1e-6);assert.deepEqual(r.palette[0],target);assert.deepEqual([...s.type],[0,0]);});
 
 test('confined vibration is active before release and stops for ordinary particles',()=>{globalThis.devicePixelRatio=1;const values=[];const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(_,n)=>n,uniform1f:(n,v)=>{if(n==='confined')values.push(v);}},{get:(o,k)=>k in o?o[k]:(()=>({}))});const r=new Renderer({width:0,height:0,getContext:()=>gl}),s=new Simulation(5,400,300);s.openingColorMix=0;r.draw(s);assert.ok(values.every(v=>v===1));values.length=0;s.openingColorMix=.1;r.draw(s);assert.ok(values.length>0&&values.every(v=>v===0));});
+
+test('emergency quality skips expensive effects without removing scene elements or overwriting user settings',async()=>{
+ const {QUALITY_LEVELS}=await import('../dist/performance.js');globalThis.devicePixelRatio=1;
+ const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(_,n)=>n},{get:(o,k)=>k in o?o[k]:(()=>({}))});
+ const canvas={width:0,height:0,getContext:()=>gl},r=new Renderer(canvas),s=new Simulation(20,900,650);let bloom=0,backdrop=0,trailAmount=null;
+ r.bloom.begin=()=>{bloom++;return false;};r.backdrop.draw=()=>backdrop++;r.curves.draw=(_s,_h,_p,amount)=>trailAmount=amount;r.bloom.intensity=1.6;r.trail=1;
+ r.quality=QUALITY_LEVELS.at(-1);r.scale=r.quality.scale;r.draw(s);
+ assert.equal(bloom,0);assert.equal(backdrop,0);assert.equal(trailAmount,0);assert.equal(canvas.width,225);assert.equal(s.count,20);assert.equal(r.bloom.intensity,1.6);assert.equal(r.trail,1);
+ r.quality=QUALITY_LEVELS[0];r.scale=1;r.draw(s);assert.equal(bloom,1);assert.equal(backdrop,1);assert.equal(trailAmount,1);assert.equal(canvas.width,900);
+});
