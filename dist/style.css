@@ -171,7 +171,7 @@ body.pop .start-title .opening-letter{text-shadow:0 0 calc(18px*var(--pp-bloom))
 @media(prefers-reduced-motion:reduce){.title-pulsing .start-title .opening-letter{animation:none}}
 
 /* Large, quiet title: two lines, palette-tinted ink rather than a bright focal point. */
-#start-screen .start-title{font-size:clamp(42px,10.5vw,128px);line-height:.92;top:clamp(30px,6vh,72px);width:max-content;max-width:94vw}
+#start-screen .start-title{font-size:clamp(42px,min(10.5vw,17vh),128px);line-height:.92;top:clamp(30px,6vh,72px);width:max-content;max-width:94vw}
 .start-title .opening-letter:nth-child(9){display:block;height:0;line-height:0;width:100%}
 .start-title .opening-letter{opacity:.36}
 body.pop .start-title .opening-letter{text-shadow:none}
