@@ -155,3 +155,12 @@ body[data-performance-texture="static"] .fx-roll{display:none}
 body[data-performance-texture="off"] #screen-fx{display:none}
 body[data-performance-texture="off"]{--pp-bloom:0;--pp-scan:0}
 #performance-status{max-width:210px}#recalibrate{margin:0 0 12px;font-size:11px}
+
+/* The title repeats the same six live palette colours as the Start border. */
+.start-title .opening-letter:nth-child(6n + 1){color:var(--pop-base-1)}
+.start-title .opening-letter:nth-child(6n + 2){color:var(--pop-base-2)}
+.start-title .opening-letter:nth-child(6n + 3){color:var(--pop-hot-1)}
+.start-title .opening-letter:nth-child(6n + 4){color:var(--pop-hot-2)}
+.start-title .opening-letter:nth-child(6n + 5){color:var(--pop-accent-1)}
+.start-title .opening-letter:nth-child(6n){color:var(--pop-accent-2)}
+body.pop .start-title .opening-letter{text-shadow:0 0 calc(18px*var(--pp-bloom)) color-mix(in oklab,currentColor 40%,transparent)}
