@@ -1,15 +1,15 @@
-import {FACTION_CAP,factionOf} from './combat.js?v=1.40.0';
-import {inheritFeatures} from './features.js?v=1.40.0';
-import {ensureNeeds} from './needs.js?v=1.40.0';
-import {VALENCE,wrappedDelta} from './simulation.js?v=1.40.0';
-import {inheritTraits,reproductionRules} from './traits.js?v=1.40.0';
-import {createFish} from './creatures.js?v=1.40.0';
-import {SPECIES_PATTERN} from './simulation.js?v=1.40.0';
+import {FACTION_CAP,factionOf} from './combat.js?v=1.41.1';
+import {inheritFeatures} from './features.js?v=1.41.1';
+import {ensureNeeds} from './needs.js?v=1.41.1';
+import {VALENCE,wrappedDelta} from './simulation.js?v=1.41.1';
+import {inheritTraits,reproductionRules} from './traits.js?v=1.41.1';
+import {createFish} from './creatures.js?v=1.41.1';
+import {SPECIES_PATTERN} from './simulation.js?v=1.41.1';
 export class LifeCycle{
  constructor(target=300){this.target=target;this.requestedTarget=target;this.populationFactor=1;this.lastTrimAt=-Infinity;this.tick=0;this.births=0;this.catches=0;}
  configurePopulation(requested=this.requestedTarget,factor=1){
   if(Number.isFinite(+requested))this.requestedTarget=Math.max(40,Math.min(12000,Math.round(+requested)));
-  this.populationFactor=Number.isFinite(+factor)?Math.max(.1,Math.min(1,+factor)):1;
+  this.populationFactor=Number.isFinite(+factor)?Math.max(.01,Math.min(1,+factor)):1;
   this.target=Math.min(this.requestedTarget,Math.max(100,Math.round(this.requestedTarget*this.populationFactor)));
  }
  total(sim,creatures){return sim.count+creatures.list.reduce((n,c)=>n+4+c.stomach.length,0);}
@@ -46,7 +46,7 @@ export class LifeCycle{
   this.tick++;
   if(this.tick%120===0&&walkers.enabled)for(const a of [...walkers.list]){this.grow(a,sim,walkers);this.reproduce(a,sim,creatures,walkers);}
   // The wheel keeps turning: below target, new circles are born; old free circles are recycled into new ones.
-  if(this.tick%30===0&&this.total(sim,creatures)<this.target*.98)this.spawn(sim,walkers,2);
+  if(this.tick%30===0&&this.total(sim,creatures)<this.target*.98)this.spawn(sim,walkers,Math.min(this.populationFactor<1?8:2,Math.max(0,Math.ceil(this.target*.98-this.total(sim,creatures)))));
   if(this.tick%90===45){const protectedIds=new Set([...walkers.list.flatMap(a=>a.members),...(walkers.thrown||[]).map(o=>o.i)]);let old=-1,oldest=.85;for(let i=0;i<sim.count;i++){if(protectedIds.has(i)||sim.bondCount[i])continue;const t=sim.age[i]/sim.lifespan[i];if(t>oldest){oldest=t;old=i;}}
    if(old>=0&&sim.count>40){walkers.events.push({kind:'death',x:sim.x[old],y:sim.y[old],species:sim.type[old]});sim.rebuild(new Set([old]));walkers.remap(sim);this.spawn(sim,walkers,1);}}
   const optimized=this.populationFactor<1;if((optimized?now-this.lastTrimAt<250:this.tick%60!==0)||this.total(sim,creatures)<=this.target*1.02)return;if(optimized)this.lastTrimAt=now;

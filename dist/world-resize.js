@@ -1,5 +1,5 @@
-import {wrappedDelta} from './simulation.js?v=1.40.0';
-import {shiftFish,shiftWalker} from './body-transform.js?v=1.40.0';
+import {wrappedDelta} from './simulation.js?v=1.41.1';
+import {shiftFish,shiftWalker} from './body-transform.js?v=1.41.1';
 const wrap=(v,size)=>(v%size+size)%size;
 function rebaseFish(c,x,y,W,H){
  const px=v=>x+wrappedDelta(v-x,W),py=v=>y+wrappedDelta(v-y,H),pair=p=>{if(p){p[0]=px(p[0]);p[1]=py(p[1]);}};

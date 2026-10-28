@@ -176,3 +176,15 @@ body.pop .start-title .opening-letter{text-shadow:0 0 calc(18px*var(--pp-bloom))
 .start-title .opening-letter{opacity:.36}
 body.pop .start-title .opening-letter{text-shadow:none}
 @media(max-height:540px){#start-screen .start-title{font-size:clamp(32px,7vw,64px);top:20px}}
+
+#preflight-status{position:absolute;top:calc(50% + 138px);left:50%;translate:-50% 0;width:min(88vw,440px);font-size:11px;line-height:1.4;color:var(--pop-muted);text-align:center;margin:0}
+@media(max-height:480px){#preflight-status{top:calc(50% + 108px)}}
+
+/* App interaction: no accidental text selection or mobile control overlay. */
+*,*::before,*::after{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+@media(any-pointer:coarse),(max-width:760px){#restore,main{display:none!important}}
+body.touch-ui #restore,body.touch-ui main{display:none!important}
+#start-screen .start-title{width:min(88vw,1100px);display:flex;flex-direction:column;gap:.12em}
+.start-title .title-line{display:flex;justify-content:space-between;width:100%;color:inherit}
+.start-title .title-line:last-child{font-size:.74em}
+.start-title .title-line .opening-letter:nth-child(9){display:inline-block;width:auto;height:auto;line-height:inherit}

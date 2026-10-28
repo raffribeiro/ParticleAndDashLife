@@ -50,3 +50,11 @@ test('worker adjusts optimized population budgets without resetting the running 
   worker.postMessage({kind:'population-budget',target:600,factor:1});await wait(()=>messages.at(-1)?.populationBudget===600&&messages.at(-1).count>reduced.count);assert.equal(messages.at(-1).revision,0);
  }finally{await worker.terminate();}
 });
+
+test('preflight worker scene does not advance or mutate the waiting live universe',async()=>{
+ const url=new URL('../dist/worker.js',import.meta.url).href,bridge=`const {parentPort}=await import('node:worker_threads');globalThis.postMessage=(...args)=>parentPort.postMessage(...args);await import(${JSON.stringify(url)});parentPort.on('message',data=>globalThis.onmessage({data}));`;
+ const worker=new Worker(new URL('data:text/javascript,'+encodeURIComponent(bridge))),messages=[];worker.on('message',m=>messages.push(m));const wait=async p=>{const end=Date.now()+6000;while(!p()){if(Date.now()>end)throw Error('preflight worker timeout');await new Promise(r=>setTimeout(r,20));}};
+ try{worker.postMessage({kind:'init',waitForFrame:true,count:120,populationTarget:1400,width:900,height:650});await wait(()=>messages.length);const before=messages[0];worker.postMessage({kind:'benchmark',id:7,options:{count:240,width:900,height:650}});await wait(()=>messages.some(m=>m.kind==='benchmark-result'));const result=messages.find(m=>m.kind==='benchmark-result');assert.equal(result.error,undefined);assert.equal(result.id,7);assert.ok(result.snapshot.walkers.length>0);
+ worker.postMessage({kind:'config',paused:true,visible:true,matrix:PRESETS.symbiosis.matrix,radius:150,force:1.5,width:900,height:650,populationTarget:1400,populationScale:120/1400});await wait(()=>messages.at(-1)?.paused===true);const after=messages.at(-1);assert.equal(after.populationRequested,1400);assert.equal(after.populationBudget,120);assert.equal(after.count,120);assert.equal(after.openingWaiting,true);assert.deepEqual(after.x,before.x);assert.deepEqual(after.y,before.y);
+ }finally{await worker.terminate();}
+});

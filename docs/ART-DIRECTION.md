@@ -17,6 +17,7 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 12. **Movimento.** Transições de UI 150 ms ease-out (`--pop-ease`); respeitar `prefers-reduced-motion`.
 
 ## Adaptação de desempenho
+- Antes do Start: testar carga isolada de CPU/GPU, mantendo o núcleo visível. Mensagem curta abaixo do botão; não liberar a explosão durante o teste. Partida com até 120 partículas, crescendo somente com folga medida.
 - Preservar criaturas formadas, identidades e silhuetas. Em níveis econômicos, reduzir gradualmente partículas soltas para aliviar a física, sem reset; o controle mantém a população desejada. O alvo de 60 fps tem prioridade sobre resolução, passos de bloom, granulado/VHS animados e rastros em aparelhos lentos.
 - Ajustes automáticos são limites temporários; nunca sobrescrever os controles salvos do usuário. Recuperar qualidade somente após estabilidade prolongada.
 - Resultado da calibração fica no painel de controles, sem adicionar texto sobre a obra em modo wallpaper.
@@ -34,3 +35,8 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - Glow/halo por forma, gradientes, anéis/strokes vazios, faíscas (bloom só como pós global).
 - Cores fora da paleta ou saturação no fundo.
 - Quebrar a proporção 60-30-10 (ex.: dar a cor de destaque a uma espécie comum).
+
+## Calibração inicial e interação
+- O benchmark CPU/GPU ocorre antes do Start. Qualidade e limite de população ficam fixos depois; não há ajuste de FPS durante a simulação. A população nasce gradualmente até esse limite, sujeita ao ciclo ecológico.
+- O título usa duas linhas com a mesma largura, formando um retângulo. A segunda linha tem letras menores para acomodar & Dash Life.
+- Nenhum texto ou elemento pode ser selecionado. No celular os controles e Mostrar controles ficam ocultos.

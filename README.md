@@ -24,7 +24,9 @@ No GitHub Pages, as preferências são salvas neste navegador. O servidor local 
 
 ## Desempenho automático
 
-“Priorizar 60 fps” vem ligado. Após a explosão, o app aquece por 1,5 s e calibra usando três janelas da cena em movimento. Continua medindo os frames renderizados, o p95 do intervalo dos quadros, o custo de desenho e o custo da física. Pausa e tempo em segundo plano não entram na medição.
+“Priorizar 60 fps” vem ligado. Antes de liberar Start, o app testa uma cena isolada com partículas, peixes e corpos articulados no worker e mede o custo real de renderização na GPU, incluindo rastros já preenchidos e a cadência dos frames do navegador. Aumenta a carga até faltar folga, reserva 20% de margem e prepara um modo leve se necessário. O núcleo da abertura é redesenhado antes de cada apresentação; o teste não inicia a simulação real. Se o teste falhar, libera uma partida conservadora.
+
+A simulação começa com até 120 partículas. O teto aumenta em pequenos passos somente com 60fps estáveis e folga de CPU/desenho, até o limite previamente medido ou a população desejada. Novas partículas nascem gradualmente, sem reset. Após a explosão, o app aquece por 1,5 s e calibra usando três janelas da cena em movimento. Continua medindo os frames renderizados, o p95 do intervalo dos quadros, o custo de desenho e o custo da física. Pausa e tempo em segundo plano não entram na medição.
 
 Há sete níveis: resolução de 100% a 25%, bloom com menos passes, textura estática, redução dos rastros e, nos níveis de emergência, pós-processamento desligado. Nos dois primeiros níveis a população fica intacta; nos demais, o orçamento passa a 85%, 65%, 50%, 35% ou 22% da população desejada (piso de 100). A redução acontece em pequenos lotes de partículas soltas, preservando corpos já formados, peixes e projéteis; por isso o número real pode ficar acima do orçamento enquanto houver muita matéria protegida. O slider mantém a população desejada e as configurações salvas não são sobrescritas. Ao recuperar qualidade ou desligar o modo automático, novos nascimentos recompõem a população gradualmente, sem reset. A física permanece a 60 Hz quando o aparelho suporta. Os efeitos voltam gradualmente após estabilidade prolongada, evitando alternância constante.
 
@@ -48,3 +50,6 @@ Copyright © 2026 raffribeiro.
 Gratuito para **uso não comercial**, incluindo uso pessoal, estudo e modificação conforme a [PolyForm Noncommercial 1.0.0](LICENSE.md). Uso comercial exige autorização separada do titular. Esta é uma licença de código disponível com restrição comercial, não uma licença open source aprovada pela OSI.
 
 Inspirado conceitualmente em Particle Life; esta implementação não incorpora código do projeto de referência.
+
+### Calibração na abertura
+O teste de desempenho ocorre antes de Start Simulation. O resultado fixa a qualidade e o limite de população para a sessão; não há mudanças automáticas de qualidade durante a simulação. A partida começa com até 120 partículas e o ciclo de vida preenche gradualmente o limite escolhido. O teste busca 60 fps com margem, sem garantir essa taxa em toda condição de hardware.

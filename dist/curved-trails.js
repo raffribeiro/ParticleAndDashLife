@@ -1,4 +1,4 @@
-import {wrappedDelta} from './simulation.js?v=1.40.0';
+import {wrappedDelta} from './simulation.js?v=1.41.1';
 function program(gl,vertex,fragment,attributes){
  const p=gl.createProgram();
  for(const [type,source] of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){const shader=gl.createShader(type);gl.shaderSource(shader,source);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(shader));gl.attachShader(p,shader);}
