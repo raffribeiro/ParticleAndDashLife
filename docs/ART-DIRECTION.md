@@ -52,3 +52,5 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - Start Simulation pulsa brevemente a cada 6,5s após a entrada e a liberação pelo benchmark: antecipação curta, expansão de 7,5% e assentamento. Usa somente scale, sem loop JS; respeita reduced-motion e para ao iniciar.
 
 - A coluna visual da abertura é compartilhada entre logo e botão: min(78vw,260px,42vh). As margens transparentes do PNG (bounds alpha 49,59–1264,1126) são compensadas apenas no layout, preservando o arquivo; a arte visível alinha com as laterais do botão. Núcleo fica no mesmo eixo. Em telas baixas, toda a coluna reduz e o texto do botão acompanha para não cortar.
+
+- O núcleo inicial, o charge e a explosão usam desde o primeiro frame a paleta ativa do botão. Não há mais substituição pelas cores ColorAtlas na abertura; movimento e bloom continuam seguindo o charge. As cores permanecem contínuas ao iniciar e acompanham a rotação de matiz salva.
