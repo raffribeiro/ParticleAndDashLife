@@ -14,10 +14,10 @@
 //   head → crit chance; tail → turn rate and dash reach; armor/muscle/regeneration/agility features.
 // Anti-dominance: √n damage, mass decay above 14 circles, cap 24, type triangle, underdog bonus,
 // faction share scaling (leading faction hits softer, rare factions hit harder), post-kill fatigue.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.43.4';
-import {featureLevel} from './features.js?v=1.43.4';
-import {ensureNeeds,nourish} from './needs.js?v=1.43.4';
-import {ensureTraits} from './traits.js?v=1.43.4';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.44.0';
+import {featureLevel} from './features.js?v=1.44.0';
+import {ensureNeeds,nourish} from './needs.js?v=1.44.0';
+import {ensureTraits} from './traits.js?v=1.44.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 export const FACTIONS=[{key:'swarm',name:'Enxame'},{key:'colossus',name:'Colosso'},{key:'mystic',name:'Místico'}];
 export const FACTION_OF=[0,1,2,2,1,0];
@@ -149,7 +149,7 @@ export class Combat{
   this.engulfed++;this.effect('engulf',a.body.x,a.body.y,sim.type[a.members[0]],{duration:30});return true;
  }
  split(a,sim,walkers,fish,dir){
-  if(a.members.length<(a.stats?.faction===0?6:10)||!a.body)return false;
+  if(walkers.list.length>=walkers.max+4||a.members.length<(a.stats?.faction===0?6:10)||!a.body)return false;
   const hx=dir[0],hy=dir[1],proj=i=>wrappedDelta(sim.x[i]-a.body.x,sim.width)*hx+wrappedDelta(sim.y[i]-a.body.y,sim.height)*hy;
   const sorted=[...a.members].sort((p,q)=>proj(q)-proj(p)),front=sorted.slice(0,Math.floor(sorted.length/2)),back=sorted.slice(front.length),fs=new Set(front);
   sim.bonds=sim.bonds.filter(b=>{if(fs.has(b[0])!==fs.has(b[1])&&(a.members.includes(b[0])&&a.members.includes(b[1]))){sim.dropBond(b);return false;}return true;});
@@ -321,6 +321,7 @@ export class Combat{
    if(s.life<=0)this.nextStar=Math.min(this.nextStar,this.tick+600);return s.life>0;});
  }
  reseed(f,sim,walkers,orgs){
+  if(walkers.list.length>=walkers.max+4)return null;
   const owned=new Set(orgs.flatMap(a=>a.members)),free=[];for(let i=0;i<sim.count;i++)if(!owned.has(i)&&FACTION_OF[sim.type[i]]===f)free.push(i);
   for(let k=0;k<12&&free.length>=4;k++){const seed=free[Math.floor(this.rng()*free.length)];const near=free.filter(i=>i!==seed&&Math.hypot(wrappedDelta(sim.x[i]-sim.x[seed],sim.width),wrappedDelta(sim.y[i]-sim.y[seed],sim.height))<90).slice(0,3);
    if(near.length<3)continue;const group=[seed,...near];for(let j=1;j<group.length;j++)this.bond(sim,group[j-1],group[j]);const w=walkers.create(sim,group);w.faction=f;w.cohesion=.5;this.effect('rise',sim.x[seed],sim.y[seed],sim.type[seed],{duration:30});return w;}

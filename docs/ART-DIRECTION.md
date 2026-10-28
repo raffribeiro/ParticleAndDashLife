@@ -54,3 +54,6 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - A coluna visual da abertura é compartilhada entre logo e botão: min(78vw,260px,42vh). As margens transparentes do PNG (bounds alpha 49,59–1264,1126) são compensadas apenas no layout, preservando o arquivo; a arte visível alinha com as laterais do botão. Núcleo fica no mesmo eixo. Em telas baixas, toda a coluna reduz e o texto do botão acompanha para não cortar.
 
 - O núcleo inicial, o charge e a explosão usam desde o primeiro frame a paleta ativa do botão. Não há mais substituição pelas cores ColorAtlas na abertura; movimento e bloom continuam seguindo o charge. As cores permanecem contínuas ao iniciar e acompanham a rotação de matiz salva.
+
+- Após 15s de espera, a abertura passa a 30fps, bloom com no máximo três níveis e granulado estático. Logo, botão e paleta mantêm o desenho; Start restaura o perfil escolhido antes do charge. Sem mudanças de qualidade durante a simulação.
+- Sessões longas: snapshots com uma única mensagem em trânsito, eventos recentes limitados, cache de cores com 1.024 entradas e corpos limitados ao orçamento normal + quatro vagas de reserva. Fragmentos excedentes permanecem como matéria livre; logs automáticos de FPS desativados.

@@ -208,3 +208,7 @@ body.title-pulsing #start-simulation:enabled{animation:start-invitation 6.5s cub
 #start-screen .opening-logo{width:106.584362%;max-width:none;margin-left:-4.032922%;margin-top:-4.855967%}
 #start-screen #start-simulation{width:var(--opening-column);font-size:clamp(10px,calc(var(--opening-column)/14),18px)}
 body.pop #start-simulation span{display:block;width:100%;padding:11px 8px}
+
+/* A long wait keeps the same layout and pulse, with static screen texture. */
+body.opening-idle .fx-grain{animation:none}
+body.opening-idle .fx-roll{display:none}

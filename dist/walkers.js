@@ -1,11 +1,11 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.43.4';
-import {featureLevel} from './features.js?v=1.43.4';
-import {factionOf,FACTION_OF} from './combat.js?v=1.43.4';
+import {stepSoftStrand} from './soft-strand.js?v=1.44.0';
+import {featureLevel} from './features.js?v=1.44.0';
+import {factionOf,FACTION_OF} from './combat.js?v=1.44.0';
 // Walkers: bonded particle clusters that grow line legs and walk.
 // Every FORM_EVERY steps, connected bond components of ≥3 particles may become walkers.
 // Legs hang from the cluster's outer particles (2-bone IK), step in alternating groups,
 // and push the cluster during each stride. Anatomy fades as its connected body falls apart.
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.43.4';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.44.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Size sets the general speed (small = fast, big = slow); the pace gene adds individual variation on top.
 export const sizePace=n=>Math.max(.3,Math.min(1.3,Math.pow(4/Math.max(1,n),.65)));
@@ -114,7 +114,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   const keep=parts.filter(p=>p.length>=3).sort((a,b)=>b.length-a.length);if(!keep.length)return [];
   w.members=keep[0];w.legs=w.legs.filter(l=>w.members.includes(l.hip));w.body&&w.body.slots&&[...w.body.slots.keys()].forEach(i=>{if(!w.members.includes(i))w.body.slots.delete(i);});
   const pieces=[];
-  for(const part of keep.slice(1)){const c=this.create(sim,part);c.faction=w.faction;c.traits=w.traits?{...w.traits}:undefined;c.features=w.features?{...w.features}:undefined;c.cohesion=.6;pieces.push(c);
+  for(const part of keep.slice(1)){if(this.list.length>=this.max+4)break;const c=this.create(sim,part);c.faction=w.faction;c.traits=w.traits?{...w.traits}:undefined;c.features=w.features?{...w.features}:undefined;c.cohesion=.6;pieces.push(c);
    for(const i of part){const a=this.rng()*Math.PI*2;sim.vx[i]+=Math.cos(a)*1.2;sim.vy[i]+=Math.sin(a)*1.2;}}
   this.fragments=(this.fragments||0)+1;const [x,y]=this.centroid(sim,w.members);this.events.push({kind:'break',x,y,species:sim.type[w.members[0]]});
   return pieces;

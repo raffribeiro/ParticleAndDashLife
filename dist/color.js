@@ -48,8 +48,9 @@ export const PALETTES={
  orchid:{name:'Orchid',d:310,s:70,a:190}
 };
 const wrapHue=h=>((h%360)+360)%360;
-const chromaCache=new Map();
-export function maxChroma(L,h){const key=Math.round(L*100)+':'+Math.round(h);let v=chromaCache.get(key);if(v!==undefined)return v;let lo=0,hi=.4;for(let k=0;k<16;k++){const mid=(lo+hi)/2;if(inGamut(oklabToLinearRgb(...oklchToOklab(L,mid,h))))lo=mid;else hi=mid;}chromaCache.set(key,lo);return lo;}
+const chromaCache=new Map(),CHROMA_CACHE_LIMIT=1024;
+export function colorCacheStats(){return {entries:chromaCache.size,limit:CHROMA_CACHE_LIMIT};}
+export function maxChroma(L,h){const key=Math.round(L*100)+':'+Math.round(h);let v=chromaCache.get(key);if(v!==undefined)return v;let lo=0,hi=.4;for(let k=0;k<16;k++){const mid=(lo+hi)/2;if(inGamut(oklabToLinearRgb(...oklchToOklab(L,mid,h))))lo=mid;else hi=mid;}if(chromaCache.size>=CHROMA_CACHE_LIMIT)chromaCache.delete(chromaCache.keys().next().value);chromaCache.set(key,lo);return lo;}
 // Pop art direction: flat vivid fills with black ink contours on a dark, desaturated ground so particles and
 // strokes carry all the colour. 60-30-10 by population: species 0-1 (60%) a cool vivid pair, 2-3 (30%) warm
 // hot pair, 4-5 (10%) the brightest accents. The hue slider rotates the fills in OKLCH; ground and ink stay fixed.

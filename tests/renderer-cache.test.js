@@ -26,3 +26,5 @@ test('emergency quality skips expensive effects without removing scene elements 
  assert.equal(bloom,0);assert.equal(backdrop,0);assert.equal(trailAmount,0);assert.equal(canvas.width,225);assert.equal(s.count,20);assert.equal(r.bloom.intensity,1.6);assert.equal(r.trail,1);
  r.quality=QUALITY_LEVELS[0];r.scale=1;r.draw(s);assert.equal(bloom,1);assert.equal(backdrop,1);assert.equal(trailAmount,1);assert.equal(canvas.width,900);
 });
+
+test('idle opening reduces bloom passes temporarily without changing the chosen session quality',()=>{globalThis.devicePixelRatio=1;const gl=new Proxy({getShaderParameter:()=>true,getProgramParameter:()=>true,getAttribLocation:()=>0,getUniformLocation:(_,n)=>n},{get:(o,k)=>k in o?o[k]:(()=>({}))}),r=new Renderer({width:0,height:0,getContext:()=>gl}),s=new Simulation(20,400,300);r.quality={bloomLevels:5};r.idleOpening=true;r.draw(s);assert.equal(r.bloom.levelCount,3);assert.equal(r.quality.bloomLevels,5);r.idleOpening=false;r.draw(s);assert.equal(r.bloom.levelCount,5);});
