@@ -48,3 +48,5 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - Logo pequeno centralizado no alto da abertura (até 150px, limitado pela viewport). Somente o status do benchmark fica no canto inferior direito; botão permanece centralizado.
 - Toda a interface, status e descrições públicas usam inglês.
 - Após o benchmark, a população inicial usa o orçamento seguro medido (com a margem do teste), em vez de limitar todos os aparelhos a 120. O núcleo provisório anterior ao teste continua leve. Qualidade e orçamento permanecem fixos após Start.
+
+- Start Simulation pulsa brevemente a cada 6,5s após a entrada e a liberação pelo benchmark: antecipação curta, expansão de 7,5% e assentamento. Usa somente scale, sem loop JS; respeita reduced-motion e para ao iniciar.

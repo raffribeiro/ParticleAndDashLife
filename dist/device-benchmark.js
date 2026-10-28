@@ -1,10 +1,10 @@
 // Representative, isolated worker scene. None of these entities belong to the live world.
-import {Simulation} from './simulation.js?v=1.43.0';
-import {Creatures} from './creatures.js?v=1.43.0';
-import {Walkers} from './walkers.js?v=1.43.0';
-import {LifeCycle} from './life-cycle.js?v=1.43.0';
-import {Combat} from './combat.js?v=1.43.0';
-import {Ecology} from './ecology.js?v=1.43.0';
+import {Simulation} from './simulation.js?v=1.43.1';
+import {Creatures} from './creatures.js?v=1.43.1';
+import {Walkers} from './walkers.js?v=1.43.1';
+import {LifeCycle} from './life-cycle.js?v=1.43.1';
+import {Combat} from './combat.js?v=1.43.1';
+import {Ecology} from './ecology.js?v=1.43.1';
 export const percentile95=values=>[...values].sort((a,b)=>a-b)[Math.max(0,Math.ceil(values.length*.95)-1)]||0;
 export async function benchmarkScene({count,width,height,radius=150,force=1.5,fish=30},yieldTask=()=>new Promise(r=>setTimeout(r,0))){
  let seed=73;const rng=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);

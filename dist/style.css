@@ -196,3 +196,8 @@ body.touch-ui #restore,body.touch-ui #wallpaper,body.touch-ui main{display:none!
 /* Small centered logo; benchmark copy alone sits in the lower-right corner. */
 #start-screen .start-title.start-title-logo{position:absolute;top:clamp(16px,3vh,32px);left:50%;right:auto;bottom:auto;translate:-50% 0;width:min(38vw,18vh,150px);max-width:38vw}
 #preflight-status{position:fixed;top:auto;left:auto;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));translate:none;width:min(68vw,300px);font-size:10px;text-align:right}
+
+/* A short invitation pulse, separated by long rests; independent of entrance/hover transforms. */
+body.title-pulsing #start-simulation:enabled{animation:start-invitation 6.5s cubic-bezier(.2,.8,.2,1) infinite}
+@keyframes start-invitation{0%,70%,100%{scale:1}74%{scale:.97 1.02}79%{scale:1.075}84%{scale:.99 1.01}90%{scale:1}}
+@media(prefers-reduced-motion:reduce){body.title-pulsing #start-simulation:enabled{animation:none}}

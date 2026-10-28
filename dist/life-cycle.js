@@ -1,10 +1,10 @@
-import {FACTION_CAP,factionOf} from './combat.js?v=1.43.0';
-import {inheritFeatures} from './features.js?v=1.43.0';
-import {ensureNeeds} from './needs.js?v=1.43.0';
-import {VALENCE,wrappedDelta} from './simulation.js?v=1.43.0';
-import {inheritTraits,reproductionRules} from './traits.js?v=1.43.0';
-import {createFish} from './creatures.js?v=1.43.0';
-import {SPECIES_PATTERN} from './simulation.js?v=1.43.0';
+import {FACTION_CAP,factionOf} from './combat.js?v=1.43.1';
+import {inheritFeatures} from './features.js?v=1.43.1';
+import {ensureNeeds} from './needs.js?v=1.43.1';
+import {VALENCE,wrappedDelta} from './simulation.js?v=1.43.1';
+import {inheritTraits,reproductionRules} from './traits.js?v=1.43.1';
+import {createFish} from './creatures.js?v=1.43.1';
+import {SPECIES_PATTERN} from './simulation.js?v=1.43.1';
 export class LifeCycle{
  constructor(target=300){this.target=target;this.requestedTarget=target;this.populationFactor=1;this.lastTrimAt=-Infinity;this.tick=0;this.births=0;this.catches=0;}
  configurePopulation(requested=this.requestedTarget,factor=1){
