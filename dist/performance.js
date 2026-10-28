@@ -1,12 +1,12 @@
 // Measure actual rendered frames, not display refresh callbacks or an idle start screen.
 export const QUALITY_LEVELS=[
- {name:'Alta',population:1,scale:1,bloomLevels:5,post:true,texture:'full',trails:1,backdrop:true},
- {name:'Equilibrada',population:1,scale:.9,bloomLevels:4,post:true,texture:'full',trails:1,backdrop:true},
- {name:'Leve',population:0.85,scale:.75,bloomLevels:3,post:true,texture:'static',trails:.6,backdrop:true},
- {name:'Econômica',population:0.65,scale:.6,bloomLevels:3,post:true,texture:'static',trails:.3,backdrop:false},
- {name:'Mínima',population:0.5,scale:.45,bloomLevels:2,post:true,texture:'off',trails:0,backdrop:false},
- {name:'Essencial',population:0.35,scale:.35,bloomLevels:2,post:false,texture:'off',trails:0,backdrop:false},
- {name:'Máximo desempenho',population:0.22,scale:.25,bloomLevels:2,post:false,texture:'off',trails:0,backdrop:false}
+ {name:'High',population:1,scale:1,bloomLightls:5,post:true,texture:'full',trails:1,backdrop:true},
+ {name:'Balanced',population:1,scale:.9,bloomLightls:4,post:true,texture:'full',trails:1,backdrop:true},
+ {name:'Light',population:0.85,scale:.75,bloomLightls:3,post:true,texture:'static',trails:.6,backdrop:true},
+ {name:'Economy',population:0.65,scale:.6,bloomLightls:3,post:true,texture:'static',trails:.3,backdrop:false},
+ {name:'Minimal',population:0.5,scale:.45,bloomLightls:2,post:true,texture:'off',trails:0,backdrop:false},
+ {name:'Essential',population:0.35,scale:.35,bloomLightls:2,post:false,texture:'off',trails:0,backdrop:false},
+ {name:'Maximum performance',population:0.22,scale:.25,bloomLightls:2,post:false,texture:'off',trails:0,backdrop:false}
 ];
 const p95=a=>{const v=[...a].sort((x,y)=>x-y);return v[Math.max(0,Math.ceil(v.length*.95)-1)]||0;};
 export class PerformanceGovernor{
@@ -15,6 +15,7 @@ export class PerformanceGovernor{
  get populationScale(){return this.enabled?Math.min(this.quality.population,this.populationCeiling/this.desiredPopulation):1;}
  applyPreflight(result){this.deviceCapacity=result.capacity;this.populationCapacity=Math.min(this.desiredPopulation,this.deviceCapacity);this.populationCeiling=Math.min(this.populationCeiling,this.populationCapacity);this.level=result.level;this.restart();}
  lockSession(){this.sessionLocked=true;this.populationCeiling=Math.min(this.populationCapacity,this.desiredPopulation*this.quality.population);this.calibrated=true;}
+ get startingPopulation(){return this.sessionLocked?Math.max(40,Math.floor(this.desiredPopulation*this.populationScale)):Math.min(120,this.desiredPopulation);}
  get quality(){return QUALITY_LEVELS[this.enabled?this.level:0];}
  restart(){this.previous=null;this.longStalls=0;this.warmup=1500;this.elapsed=0;this.intervals=[];this.draws=[];this.steps=[];this.slow=0;this.stable=0;this.populationStable=0;this.calibrated=false;this.calibrationWindows=0;}
  setEnabled(value){this.enabled=!!value;this.level=0;this.restart();}
@@ -48,5 +49,5 @@ export class PerformanceGovernor{
  }
  get limited(){return this.calibrated&&this.level===QUALITY_LEVELS.length-1&&this.fps<57.5;}
  get physicsLimited(){return this.calibrated&&this.stepMs>1000/60;}
- get summary(){if(!this.enabled)return 'Ajuste automático desligado';if(this.sessionLocked)return `Qualidade fixa · ${this.quality.name} · teste inicial concluído`;if(!this.calibrated)return 'Calibrando durante a simulação…';return `${Math.round(this.fps)} fps · ${this.quality.name}${this.limited?' · limite do aparelho':this.physicsLimited?' · simulação no limite':''}`;}
+ get summary(){if(!this.enabled)return 'Automatic adjustment off';if(this.sessionLocked)return `Fixed quality · ${this.quality.name} · initial benchmark complete`;if(!this.calibrated)return 'Calibrating simulation…';return `${Math.round(this.fps)} fps · ${this.quality.name}${this.limited?' · device limit':this.physicsLimited?' · simulation at capacity':''}`;}
 }

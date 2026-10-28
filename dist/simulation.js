@@ -1,13 +1,13 @@
-import {DEFAULT_PALETTE} from './color.js?v=1.42.0';
+import {DEFAULT_PALETTE} from './color.js?v=1.43.0';
 // 60-30-10: species 0–1 30% each, 2–3 15% each, 4–5 5% each (deterministic interleave).
 export const SPECIES_PATTERN=[0,1,2,3,4,5,0,1,0,1,2,3,0,1,0,1,2,3,0,1];
 // Species colours come from a harmonic OKLCH palette; mutated in place when the palette changes.
 export const COLORS=[...DEFAULT_PALETTE.colors];
 export const PRESETS={
- symbiosis:{name:'Simbiose',description:'Afinidades suaves. Colônias que se encontram e se reorganizam.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.32:((a+1)%6===b?.65:((b+1)%6===a?.18:-.22))))},
- currents:{name:'Correntes',description:'Perseguições brandas. Grupos coesos que avançam em fila, como cardumes na correnteza.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.55:((a+1)%6===b?.55:((b+1)%6===a?.1:-.15))))},
- predator:{name:'Predador e presa',description:'Três pares de cores: uma caça, a outra foge. Grupos coesos em perseguição.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.6:((a>>1)===(b>>1)?(a%2===0?.8:-.6):-.1)))},
- colonies:{name:'Colônias',description:'Cada espécie encontra seu lugar. Ilhas de cor e membranas vivas.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.85:-.35))}
+ symbiosis:{name:'Symbiosis',description:'Gentle affinities. Colonies meet and rearrange.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.32:((a+1)%6===b?.65:((b+1)%6===a?.18:-.22))))},
+ currents:{name:'Currents',description:'Gentle chases. Cohesive groups flow together like schools of fish.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.55:((a+1)%6===b?.55:((b+1)%6===a?.1:-.15))))},
+ predator:{name:'Predator and prey',description:'Three color pairs: one hunts, the other flees. Cohesive groups give chase.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.6:((a>>1)===(b>>1)?(a%2===0?.8:-.6):-.1)))},
+ colonies:{name:'Colonies',description:'Each species finds its place. Islands of color and living membranes.',matrix:Array.from({length:6},(_,a)=>Array.from({length:6},(_,b)=>a===b?.85:-.35))}
 };
 // Geometry follows energy (with hysteresis): hungry → triangle (1), balanced → circle (0), well fed → square (2).
 // Particle life cycle: seed ○ (tiny) → juvenile △ (growing) → adult □ (full size) → elder □ (shrinking) → reborn as seed.

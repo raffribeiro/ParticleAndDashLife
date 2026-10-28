@@ -26,7 +26,7 @@ No GitHub Pages, as preferências são salvas neste navegador. O servidor local 
 
 “Priorizar 60 fps” vem ligado. Antes de liberar Start, o app testa uma cena isolada com partículas, peixes e corpos articulados no worker e mede o custo real de renderização na GPU, incluindo rastros já preenchidos e a cadência dos frames do navegador. Aumenta a carga até faltar folga, reserva 20% de margem e prepara um modo leve se necessário. O núcleo da abertura é redesenhado antes de cada apresentação; o teste não inicia a simulação real. Se o teste falhar, libera uma partida conservadora.
 
-A simulação começa com até 120 partículas e cresce gradualmente até o orçamento definido pelo teste inicial. Qualidade, resolução, efeitos e limite de população permanecem fixos durante a sessão; o FPS continua visível para consulta, sem disparar ajustes.
+Antes do teste, o núcleo provisório usa até 120 partículas. Após o teste, a partida usa a população segura medida para o aparelho, com a margem de segurança do benchmark. Qualidade, resolução, efeitos e limite de população permanecem fixos durante a sessão; o FPS continua visível para consulta, sem disparar ajustes.
 
 O teste escolhe entre sete níveis de qualidade, reduzindo resolução, passes de bloom, textura, rastros e população conforme a capacidade medida. Corpos já formados, peixes e projéteis são preservados pelo controle ecológico. As preferências salvas não são sobrescritas.
 

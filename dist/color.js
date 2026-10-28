@@ -40,12 +40,12 @@ export const SPECIES_SHARE=[.3,.3,.15,.15,.05,.05];
 // Triadic hue triples (120° apart in OKLCH): d = dominant, s = secondary, a = accent.
 export const PALETTES={
  pop:{name:'Pop',pop:true,d:250,s:5,a:140},
- abyss:{name:'Abissal',d:250,s:130,a:10},
- reef:{name:'Recife',d:200,s:320,a:80},
+ abyss:{name:'Abyss',d:250,s:130,a:10},
+ reef:{name:'Reef',d:200,s:320,a:80},
  aurora:{name:'Aurora',d:160,s:280,a:40},
- ember:{name:'Brasa',d:30,s:270,a:150},
- lagoon:{name:'Lagoa',d:180,s:60,a:300},
- orchid:{name:'Orquídea',d:310,s:70,a:190}
+ ember:{name:'Ember',d:30,s:270,a:150},
+ lagoon:{name:'Lagoon',d:180,s:60,a:300},
+ orchid:{name:'Orchid',d:310,s:70,a:190}
 };
 const wrapHue=h=>((h%360)+360)%360;
 const chromaCache=new Map();
