@@ -193,8 +193,8 @@ body.touch-ui #restore,body.touch-ui #wallpaper,body.touch-ui main{display:none!
 #start-screen .start-title.start-title-logo{top:clamp(16px,3vh,32px);width:min(78vw,40vh,400px);max-width:78vw;display:block;font-size:0;line-height:0;gap:0;text-shadow:none}
 .opening-logo{display:block;width:100%;height:auto;object-fit:contain;pointer-events:none;-webkit-user-drag:none;transform-origin:50% 75%}
 
-/* Small centered logo; benchmark copy alone sits in the lower-right corner. */
-#start-screen .start-title.start-title-logo{position:absolute;top:clamp(16px,3vh,32px);left:50%;right:auto;bottom:auto;translate:-50% 0;width:min(38vw,18vh,150px);max-width:38vw}
+/* Logo, nucleus and Start form one centered composition; benchmark copy stays in the corner. */
+#start-screen .start-title.start-title-logo{position:absolute;top:auto;left:50%;right:auto;bottom:calc(50% + clamp(30px,7vh,60px));translate:-50% 0;width:min(52vw,25vh,210px);max-width:52vw}
 #preflight-status{position:fixed;top:auto;left:auto;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));translate:none;width:min(68vw,300px);font-size:10px;text-align:right}
 
 /* A short invitation pulse, separated by long rests; independent of entrance/hover transforms. */

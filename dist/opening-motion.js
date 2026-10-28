@@ -1,4 +1,4 @@
-import {openingMotion} from './opening-motion-data.js?v=1.43.1';
+import {openingMotion} from './opening-motion-data.js?v=1.43.2';
 // Keep the existing semantic heading and real button; only their transforms are animated.
 export function prepareOpening(doc=document,rng=Math.random){
  const title=doc.querySelector('.start-title'),button=doc.getElementById('start-simulation');

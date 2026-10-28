@@ -42,10 +42,10 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - Nenhum texto ou elemento pode ser selecionado. No celular os controles e Mostrar controles ficam ocultos.
 
 ## Logo de abertura
-- A abertura usa o PNG fornecido pelo Raff em images/particle-and-dash-life.png, preservando cores, transparência e proporção. O logo fica centralizado no alto, limitado por largura e altura da tela para deixar o núcleo e Start livres. Entrada curta com o spring existente; não recriar as letras em HTML.
+- A abertura usa o PNG fornecido pelo Raff em images/particle-and-dash-life.png, preservando cores, transparência e proporção. O logo fica centralizado acima do núcleo, compondo um único grupo com o Start, limitado por largura e altura da tela. Entrada curta com o spring existente; não recriar as letras em HTML.
 
 ## Assinatura e idioma
-- Logo pequeno centralizado no alto da abertura (até 150px, limitado pela viewport). Somente o status do benchmark fica no canto inferior direito; botão permanece centralizado.
+- Logo centralizado acima do núcleo, com até 210px e tamanho limitado a 52vw/25vh. A distância até o núcleo varia de 30 a 60px para manter a composição unida e funcionar em telas baixas. Somente o status do benchmark fica no canto inferior direito; botão permanece na posição original.
 - Toda a interface, status e descrições públicas usam inglês.
 - Após o benchmark, a população inicial usa o orçamento seguro medido (com a margem do teste), em vez de limitar todos os aparelhos a 120. O núcleo provisório anterior ao teste continua leve. Qualidade e orçamento permanecem fixos após Start.
 
