@@ -1,11 +1,11 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.43.2';
-import {featureLevel} from './features.js?v=1.43.2';
-import {factionOf,FACTION_OF} from './combat.js?v=1.43.2';
+import {stepSoftStrand} from './soft-strand.js?v=1.43.3';
+import {featureLevel} from './features.js?v=1.43.3';
+import {factionOf,FACTION_OF} from './combat.js?v=1.43.3';
 // Walkers: bonded particle clusters that grow line legs and walk.
 // Every FORM_EVERY steps, connected bond components of ≥3 particles may become walkers.
 // Legs hang from the cluster's outer particles (2-bone IK), step in alternating groups,
 // and push the cluster during each stride. Anatomy fades as its connected body falls apart.
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.43.2';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.43.3';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Size sets the general speed (small = fast, big = slow); the pace gene adds individual variation on top.
 export const sizePace=n=>Math.max(.3,Math.min(1.3,Math.pow(4/Math.max(1,n),.65)));

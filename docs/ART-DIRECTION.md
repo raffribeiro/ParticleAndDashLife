@@ -50,3 +50,5 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - Após o benchmark, a população inicial usa o orçamento seguro medido (com a margem do teste), em vez de limitar todos os aparelhos a 120. O núcleo provisório anterior ao teste continua leve. Qualidade e orçamento permanecem fixos após Start.
 
 - Start Simulation pulsa brevemente a cada 6,5s após a entrada e a liberação pelo benchmark: antecipação curta, expansão de 7,5% e assentamento. Usa somente scale, sem loop JS; respeita reduced-motion e para ao iniciar.
+
+- A coluna visual da abertura é compartilhada entre logo e botão: min(78vw,260px,42vh). As margens transparentes do PNG (bounds alpha 49,59–1264,1126) são compensadas apenas no layout, preservando o arquivo; a arte visível alinha com as laterais do botão. Núcleo fica no mesmo eixo. Em telas baixas, toda a coluna reduz e o texto do botão acompanha para não cortar.

@@ -1,5 +1,5 @@
-import {wrappedDelta} from './simulation.js?v=1.43.2';
-import {shiftFish,shiftWalker} from './body-transform.js?v=1.43.2';
+import {wrappedDelta} from './simulation.js?v=1.43.3';
+import {shiftFish,shiftWalker} from './body-transform.js?v=1.43.3';
 // Keep drag state in the simulation: the renderer never owns particle identities.
 export class SceneInteraction{
  constructor(){this.cancel();}

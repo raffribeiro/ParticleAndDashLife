@@ -201,3 +201,10 @@ body.touch-ui #restore,body.touch-ui #wallpaper,body.touch-ui main{display:none!
 body.title-pulsing #start-simulation:enabled{animation:start-invitation 6.5s cubic-bezier(.2,.8,.2,1) infinite}
 @keyframes start-invitation{0%,70%,100%{scale:1}74%{scale:.97 1.02}79%{scale:1.075}84%{scale:.99 1.01}90%{scale:1}}
 @media(prefers-reduced-motion:reduce){body.title-pulsing #start-simulation:enabled{animation:none}}
+
+/* One visual column: trim only the PNG's transparent gutters in layout. */
+#start-screen{--opening-column:min(78vw,260px,42vh)}
+#start-screen .start-title.start-title-logo{width:var(--opening-column);max-width:none;height:calc(var(--opening-column)*1067/1215)}
+#start-screen .opening-logo{width:106.584362%;max-width:none;margin-left:-4.032922%;margin-top:-4.855967%}
+#start-screen #start-simulation{width:var(--opening-column);font-size:clamp(10px,calc(var(--opening-column)/14),18px)}
+body.pop #start-simulation span{display:block;width:100%;padding:11px 8px}
