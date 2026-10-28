@@ -19,7 +19,7 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 ## Adaptação de desempenho
 - Antes do Start: testar carga isolada de CPU/GPU, mantendo o núcleo visível. Mensagem curta abaixo do botão; não liberar a explosão durante o teste. Partida com até 120 partículas, crescendo somente com folga medida.
 - Preservar criaturas formadas, identidades e silhuetas. Em níveis econômicos, reduzir gradualmente partículas soltas para aliviar a física, sem reset; o controle mantém a população desejada. O alvo de 60 fps tem prioridade sobre resolução, passos de bloom, granulado/VHS animados e rastros em aparelhos lentos.
-- Ajustes automáticos são limites temporários; nunca sobrescrever os controles salvos do usuário. Recuperar qualidade somente após estabilidade prolongada.
+- O perfil inicial limita os efeitos sem sobrescrever os controles salvos do usuário; permanece fixo após Start.
 - Resultado da calibração fica no painel de controles, sem adicionar texto sobre a obra em modo wallpaper.
 
 ## Interface

@@ -1,18 +1,18 @@
-import {runPreflight,measureRender} from './preflight.js?v=1.41.1';
-import {PerformanceGovernor} from './performance.js?v=1.41.1';
-import {prepareOpening} from './opening-motion.js?v=1.41.1';
+import {runPreflight,measureRender} from './preflight.js?v=1.41.2';
+import {PerformanceGovernor} from './performance.js?v=1.41.2';
+import {prepareOpening} from './opening-motion.js?v=1.41.2';
 window.lumaOpening=prepareOpening();
-import {SceneGesture} from './scene-interaction.js?v=1.41.1';
-import {BigBang} from './big-bang.js?v=1.41.1';
-import {mergeChanged} from './pending-changes.js?v=1.41.1';
-import {DoubleTap} from './tap-gesture.js?v=1.41.1';
-import {canvasSize} from './canvas-size.js?v=1.41.1';
-import {FrameClock} from './timing.js?v=1.41.1';
+import {SceneGesture} from './scene-interaction.js?v=1.41.2';
+import {BigBang} from './big-bang.js?v=1.41.2';
+import {mergeChanged} from './pending-changes.js?v=1.41.2';
+import {DoubleTap} from './tap-gesture.js?v=1.41.2';
+import {canvasSize} from './canvas-size.js?v=1.41.2';
+import {FrameClock} from './timing.js?v=1.41.2';
 // App version: shown in the corner; compared with version.json (never cached) to detect a stale load.
-let lowFps=0,lowUntil=0;export const VERSION='1.41.1';
+let lowFps=0,lowUntil=0;export const VERSION='1.41.2';
 {const tag=document.createElement('div');tag.id='version';tag.textContent='v'+VERSION;document.body.appendChild(tag);
  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j.version!==VERSION){tag.textContent='v'+VERSION+' · disponível v'+j.version+' — Cmd+Shift+R';tag.classList.add('stale');}}).catch(()=>{});}
-import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.41.1';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.41.1';import {Renderer} from './renderer.js?v=1.41.1';
+import {Simulation,COLORS,PRESETS} from './simulation.js?v=1.41.2';import {makePalette,PALETTES,OPENING_PALETTE,randomTriple,lerpPalette} from './color.js?v=1.41.2';import {Renderer} from './renderer.js?v=1.41.2';
 const $=id=>document.getElementById(id),canvas=$('universe');window.lumaLoader?.set(.45,'Preparando a GPU');let renderer;try{renderer=new Renderer(canvas);}catch(e){window.lumaLoader?.fail('Este navegador não conseguiu iniciar o WebGL.');$('notice').textContent=e.message;$('notice').style.display='block';throw e;}
 window.lumaLoader?.set(.62,'Iniciando a simulação');let loaderSnapshot=false;
 const s=new Simulation(120,canvasSize(canvas).width,canvasSize(canvas).height);new BigBang(s);s.openingColorMix=0;s.openingScale=1;s.radius=150;s.force=1.5;s.setInertia(1);let paused=matchMedia('(prefers-reduced-motion: reduce)').matches,pointer=null,current='symbiosis',last=0,accumulator=0,frames=0,sample=0,lastRender=0,needsRender=true;const fmt=n=>n.toLocaleString('pt-BR');

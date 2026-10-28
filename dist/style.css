@@ -182,8 +182,8 @@ body.pop .start-title .opening-letter{text-shadow:none}
 
 /* App interaction: no accidental text selection or mobile control overlay. */
 *,*::before,*::after{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-@media(any-pointer:coarse),(max-width:760px){#restore,main{display:none!important}}
-body.touch-ui #restore,body.touch-ui main{display:none!important}
+@media(any-pointer:coarse),(max-width:760px){#restore,#wallpaper,main{display:none!important}}
+body.touch-ui #restore,body.touch-ui #wallpaper,body.touch-ui main{display:none!important}
 #start-screen .start-title{width:min(88vw,1100px);display:flex;flex-direction:column;gap:.12em}
 .start-title .title-line{display:flex;justify-content:space-between;width:100%;color:inherit}
 .start-title .title-line:last-child{font-size:.74em}
