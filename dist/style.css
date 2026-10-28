@@ -188,3 +188,7 @@ body.touch-ui #restore,body.touch-ui #wallpaper,body.touch-ui main{display:none!
 .start-title .title-line{display:flex;justify-content:space-between;width:100%;color:inherit}
 .start-title .title-line:last-child{font-size:.74em}
 .start-title .title-line .opening-letter:nth-child(9){display:inline-block;width:auto;height:auto;line-height:inherit}
+
+/* Supplied logo keeps its own colors, alpha and aspect ratio. */
+#start-screen .start-title.start-title-logo{top:clamp(16px,3vh,32px);width:min(78vw,40vh,400px);max-width:78vw;display:block;font-size:0;line-height:0;gap:0;text-shadow:none}
+.opening-logo{display:block;width:100%;height:auto;object-fit:contain;pointer-events:none;-webkit-user-drag:none;transform-origin:50% 75%}

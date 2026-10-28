@@ -40,3 +40,6 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 - O benchmark CPU/GPU ocorre antes do Start. Qualidade e limite de população ficam fixos depois; não há ajuste de FPS durante a simulação. A população nasce gradualmente até esse limite, sujeita ao ciclo ecológico.
 - O título usa duas linhas com a mesma largura, formando um retângulo. A segunda linha tem letras menores para acomodar & Dash Life.
 - Nenhum texto ou elemento pode ser selecionado. No celular os controles e Mostrar controles ficam ocultos.
+
+## Logo de abertura
+- A abertura usa o PNG fornecido pelo Raff em images/particle-and-dash-life.png, preservando cores, transparência e proporção. O logo fica centralizado no alto, limitado por largura e altura da tela para deixar o núcleo e Start livres. Entrada curta com o spring existente; não recriar as letras em HTML.

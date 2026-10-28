@@ -1,9 +1,9 @@
-import {TrailHistory} from './trail-history.js?v=1.41.2';
+import {TrailHistory} from './trail-history.js?v=1.42.0';
 // GPU probes use the real renderer. Redraw the nucleus before the browser presents a frame.
 // Small pure helpers are kept here so the main thread does not import the worker scene.
 const percentile95=values=>[...values].sort((a,b)=>a-b)[Math.max(0,Math.ceil(values.length*.95)-1)]||0;
 export const benchmarkCounts=requested=>[...new Set([Math.min(120,requested),240,480,960,1920,3840,requested].filter(n=>n<=requested))].sort((a,b)=>a-b);
-import {QUALITY_LEVELS} from './performance.js?v=1.41.2';
+import {QUALITY_LEVELS} from './performance.js?v=1.42.0';
 export async function runPreflight({requested,measureCPU,measureGPU,onProgress=()=>{}}){
  let best=Math.min(100,requested),level=0,lastCPU=0,lastGPU=0,limited=false;
  for(const count of benchmarkCounts(requested)){
