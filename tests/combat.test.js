@@ -46,3 +46,15 @@ test('agar.io logic is off by default: no pellets, no engulf, no split',()=>{con
 test('same-type neighbours can coexist peacefully between occasional feuds',()=>{const {s,w,orgs,c}=world([{n:6,type:1,x:300,y:300},{n:6,type:1,x:330,y:300}]);c.rng=()=>.99;prime(c,s,orgs);for(let i=0;i<130;i++)c.step(s,w,[]);assert.ok(orgs.every(a=>!a.combat.engaged));assert.ok(orgs.every(a=>a.combat.hp===a.combat.maxHp));});
 test('nearby creatures of the same type sometimes feud, then observe a truce',()=>{const {s,w,orgs,c}=world([{n:6,type:1,x:300,y:300},{n:6,type:1,x:330,y:300}]);c.rng=()=>0;c.tick=119;prime(c,s,orgs);c.step(s,w,[]);const [a,b]=orgs;assert.equal(a.combat.rivalId,b.id);assert.equal(b.combat.rivalId,a.id);assert.ok(c.rivals(a,b));assert.ok(a.combat.damage>0||b.combat.damage>0);const until=a.combat.rivalUntil;c.tick=until;c.step(s,w,[]);assert.equal(c.rivals(a,b),false);assert.ok(a.combat.rivalAfter>c.tick);assert.equal(a.combat.engaged,false);});
 test('same-clan relatives remain allies even when a feud would otherwise trigger',()=>{const {s,w,orgs,c}=world([{n:6,type:1,x:300,y:300},{n:6,type:1,x:330,y:300}]);for(const a of orgs)a.clan='family';c.rng=()=>0;c.tick=119;c.step(s,w,[]);assert.ok(orgs.every(a=>!a.combat.engaged&&!a.combat.rivalId));});
+
+test('an evenly paced retreat opens a contact window instead of preserving a straight-line stalemate',()=>{
+ const {s,w,orgs,c}=world([{type:1,n:8,x:200,y:300},{type:2,n:8,x:360,y:300}],{W:10000,H:700}),[hunter,prey]=orgs;
+ for(const a of orgs){a.legs=[];a.legCount=0;a.materialParts=true;a.plan='lizard';a.parts=['lizard','lizard'];a.pace=1;a.heading=0;a.behavior={activity:1,speed:1,fleeing:a===prey};a.meander={f:0,p:0,turn:0,next:Infinity};for(const i of a.members){s.vx[i]=1;s.vy[i]=0;}}
+ prime(c,s,orgs);for(const a of orgs)for(const ability of ['dash','orb','shield','regen','shock','split'])a.combat.cd[ability]=Infinity;
+ let contact=false,minGap=Infinity,minPace=Infinity,maxPace=0;
+ for(let tick=0;tick<2400&&!contact;tick++){
+  s.energy.fill(1.3);prey.combat.hp=prey.combat.maxHp*.2;s.step();w.tick++;for(const a of orgs)w.walk(a,s,1);c.step(s,w,[]);
+  const gap=Math.hypot(wrappedDelta(prey.body.x-hunter.body.x,s.width),wrappedDelta(prey.body.y-hunter.body.y,s.height));minGap=Math.min(minGap,gap);minPace=Math.min(minPace,hunter.pursuit?.pace??1);maxPace=Math.max(maxPace,hunter.pursuit?.pace??1);contact=(hunter.combat.cd.melee||0)>0;
+ }
+ assert.ok(contact,`pursuer never reached melee range; closest gap ${minGap}, reach ${hunter.stats.radius+prey.stats.radius+4}, modes ${hunter.combat.mode}/${prey.combat.mode}, pace ${hunter.pursuit?.pace}/${prey.pursuit?.pace}`);assert.ok(maxPace-minPace>.15);assert.equal(s.count,56);assert.ok(s.vx.every(Number.isFinite));
+});

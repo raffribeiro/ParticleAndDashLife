@@ -1,11 +1,11 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.44.0';
-import {featureLevel} from './features.js?v=1.44.0';
-import {factionOf,FACTION_OF} from './combat.js?v=1.44.0';
+import {stepSoftStrand} from './soft-strand.js?v=1.45.0';
+import {featureLevel} from './features.js?v=1.45.0';
+import {factionOf,FACTION_OF} from './combat.js?v=1.45.0';
 // Walkers: bonded particle clusters that grow line legs and walk.
 // Every FORM_EVERY steps, connected bond components of ≥3 particles may become walkers.
 // Legs hang from the cluster's outer particles (2-bone IK), step in alternating groups,
 // and push the cluster during each stride. Anatomy fades as its connected body falls apart.
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.44.0';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.45.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Size sets the general speed (small = fast, big = slow); the pace gene adds individual variation on top.
 export const sizePace=n=>Math.max(.3,Math.min(1.3,Math.pow(4/Math.max(1,n),.65)));
@@ -393,7 +393,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   const blend=w.cohesion,bodyLength=b.length;
   // More legs = more agility (combat rule): cadence rises with mounted legs, size slows the body.
   // More legs = slower but sturdier (sturdiness lives in combat stats).
-  w.locomotion=1/(1+.12*Math.max(0,(w.materialParts?w.legCount:w.legs.length)-2))*sizePace(w.members.length)*(w.pace??1);
+  w.locomotion=1/(1+.12*Math.max(0,(w.materialParts?w.legCount:w.legs.length)-2))*sizePace(w.members.length)*(w.pace??1)*(w.pursuit?.pace??1);
   w.phase+=dt*.035*w.locomotion*(.4+.6*activity);
   let meanVX=0,meanVY=0;for(const i of w.members){meanVX+=sim.vx[i];meanVY+=sim.vy[i];}meanVX/=w.members.length;meanVY/=w.members.length;
   const corrections=[];let totalX=0,totalY=0;
@@ -463,7 +463,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   // Reduce the common translational speed, retaining internal particle motion.
   let vx=0,vy=0;for(const i of w.members){vx+=sim.vx[i];vy+=sim.vy[i];}
   vx/=w.members.length;vy/=w.members.length;
-  const speed=Math.hypot(vx,vy),cap=2.4*w.locomotion*(behavior?.fleeing?1.35:1)*(1+featureLevel(w,'agility')*.08)/(1+(w.growth||0)*.2+featureLevel(w,'armor')*.04);
+  const speed=Math.hypot(vx,vy),cap=2.4*w.locomotion*(behavior?.fleeing?(w.pursuit?.mode==='flee'&&!w.pursuit.panic?1.12:1.35):1)*(1+featureLevel(w,'agility')*.08)/(1+(w.growth||0)*.2+featureLevel(w,'armor')*.04);
   const drag=Math.max(0,1-cap/(speed||1));
   for(const i of w.members){sim.vx[i]-=vx*drag;sim.vy[i]-=vy*drag;}
   // Cruise: the body's common velocity is eased toward a speed set by its pace gene (slow drifters vs. darting ones).
@@ -472,7 +472,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   {const m=w.meander||(w.meander={f:.006+this.rng()*.014,p:this.rng()*TAU,turn:0,next:120+this.rng()*480});const n=w.members.length,sp=Math.hypot(vx,vy);
    m.p+=m.f*dt*(1+.4*Math.sin(this.tick*.0013+w.id));m.next-=dt;if(m.next<=0){m.turn=(this.rng()<.5?-1:1)*(.8+this.rng()*.8);m.next=180+this.rng()*600;}m.turn*=Math.exp(-.02*dt);
    if(sp>.05){const px=-vy/sp,py=vx/sp,amp=(.012+.0045*Math.min(20,n))*(Math.sin(m.p)+m.turn)*dt*Math.max(.4,activity);for(const i of w.members){sim.vx[i]+=px*amp;sim.vy[i]+=py*amp;}}}
-  {const cruise=.9*(w.pace??1)*sizePace(w.members.length)*Math.max(.35,activity)*planCruise(w),sp=Math.hypot(vx,vy);if(sp<cruise){const hx=sp>.05?vx/sp:Math.cos(w.heading),hy=sp>.05?vy/sp:Math.sin(w.heading),add=(cruise-sp)*.05*dt;for(const i of w.members){sim.vx[i]+=hx*add;sim.vy[i]+=hy*add;}}}
+  {const cruise=.9*(w.pace??1)*(w.pursuit?.pace??1)*sizePace(w.members.length)*Math.max(.35,activity)*planCruise(w),sp=Math.hypot(vx,vy);if(sp<cruise){const hx=sp>.05?vx/sp:Math.cos(w.heading),hy=sp>.05?vy/sp:Math.sin(w.heading),add=(cruise-sp)*.05*dt;for(const i of w.members){sim.vx[i]+=hx*add;sim.vy[i]+=hy*add;}}}
   const hasTail=(this.fish||[]).some(c=>c.attachment?.walker===w.id&&c.attachment.role==='tail');
   for(const i of w.members){if(w.growth)sim.energy[i]=Math.max(.2,sim.energy[i]-.00015*w.growth*dt);sim.vx[i]+=hx*thrust;sim.vy[i]+=hy*thrust;if(hasTail){const lateral=-hy*sim.vx[i]+hx*sim.vy[i];sim.vx[i]+=hy*lateral*.008*dt;sim.vy[i]-=hx*lateral*.008*dt;}}
   const walking=active.filter(l=>!l.tentacle);

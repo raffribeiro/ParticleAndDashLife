@@ -1,4 +1,4 @@
-import {wrappedDelta} from './simulation.js?v=1.44.0';
+import {wrappedDelta} from './simulation.js?v=1.45.0';
 // Water-damped chain: only its root is driven; the tip keeps momentum.
 export function stepSoftStrand(c,root,flow,time,W,H,dt=1,join=1){
  const n=c.x.length;if(n<2)return;

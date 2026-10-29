@@ -57,3 +57,6 @@ O teste de desempenho ocorre antes de Start Simulation. O resultado fixa a quali
 ### Sessões prolongadas
 A comunicação com a tela mantém no máximo um snapshot em trânsito; quadros atrasados são substituídos pelo estado mais recente. Eventos recentes, efeitos, rastros e cache de cores têm limites fixos. Fragmentações respeitam o orçamento de corpos, mantendo o restante como partículas livres. O app não envia mais logs automáticos de FPS para um arquivo local.
 Após 15 segundos na abertura, a renderização cai para 30 fps, com até três níveis de bloom e textura estática. Start restaura imediatamente o perfil medido e a meta de 60 fps; nenhuma recalibração acontece durante a simulação.
+
+### Ritmo de perseguição
+Criaturas em confronto alternam arrancadas curtas e recuperação, com fases próprias e resistência influenciada por seus traços. Quem persegue antecipa a trajetória do alvo; quem foge faz leves desvios e perde a vantagem de velocidade permanente. Corpos maiores e com mais patas mantêm seus custos de locomoção. O estado de perseguição tem tamanho fixo por criatura, sem histórico de alvos nem timers adicionais.

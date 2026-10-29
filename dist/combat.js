@@ -1,3 +1,4 @@
+import {updatePursuit,pursuitDirection} from './pursuit.js?v=1.45.0';
 // Real-time combat between organisms (walkers), with factions, abilities, dismemberment,
 // rigid-body reactions and a Mario-star power-up. agar.io growth (pellets, engulf, split/merge,
 // mass decay) is kept behind `agarEnabled` and is off: bodies grow by the earlier rules
@@ -14,10 +15,10 @@
 //   head → crit chance; tail → turn rate and dash reach; armor/muscle/regeneration/agility features.
 // Anti-dominance: √n damage, mass decay above 14 circles, cap 24, type triangle, underdog bonus,
 // faction share scaling (leading faction hits softer, rare factions hit harder), post-kill fatigue.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.44.0';
-import {featureLevel} from './features.js?v=1.44.0';
-import {ensureNeeds,nourish} from './needs.js?v=1.44.0';
-import {ensureTraits} from './traits.js?v=1.44.0';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.45.0';
+import {featureLevel} from './features.js?v=1.45.0';
+import {ensureNeeds,nourish} from './needs.js?v=1.45.0';
+import {ensureTraits} from './traits.js?v=1.45.0';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 export const FACTIONS=[{key:'swarm',name:'Enxame'},{key:'colossus',name:'Colosso'},{key:'mystic',name:'Místico'}];
 export const FACTION_OF=[0,1,2,2,1,0];
@@ -227,7 +228,7 @@ export class Combat{
  step(sim,walkers,fish,creatures=null,dt=1){
   this.tick++;for(const e of this.fx)e.age+=dt;this.fx=this.fx.filter(e=>e.age<e.duration);
   this.stepStars(sim,walkers,dt);this.stepRipples(sim,dt);
-  if(!this.enabled){this.orbs=[];return;}
+  if(!this.enabled){this.orbs=[];for(const a of walkers.list)if(a.pursuit)updatePursuit(a,{tick:this.tick,dt});return;}
   const orgs=walkers.list.filter(a=>a.body&&a.members.length>=3&&!a.dead);
   // Star power: the body breathes in scale while it lasts.
   for(const a of orgs)if(this.tick<(a.combat?.starUntil||0))for(const i of a.members)this.pulse(sim,i,.35+.25*Math.sin(this.tick*.12+i));
@@ -252,18 +253,20 @@ export class Combat{
    for(const o of orgs){if(o===a||o.dead)continue;const d=Math.hypot(wrappedDelta(o.body.x-b.x,sim.width),wrappedDelta(o.body.y-b.y,sim.height));
     if(!this.hostile(a,o)){if(d<180)allies++;continue;}if(d<best){best=d;target=o;}}
    c.allies=allies;
-   if(!target){c.engaged=false;continue;}
-   const dx=wrappedDelta(target.body.x-b.x,sim.width),dy=wrappedDelta(target.body.y-b.y,sim.height),dist=Math.hypot(dx,dy)||1,dir=[dx/dist,dy/dist];
+   if(!target){c.engaged=false;updatePursuit(a,{tick:this.tick,dt});continue;}
+   const dx=wrappedDelta(target.body.x-b.x,sim.width),dy=wrappedDelta(target.body.y-b.y,sim.height),dist=Math.hypot(dx,dy)||1;let dir=[dx/dist,dy/dist];
    const ratio=target.members.length/a.members.length,hpFrac=c.hp/c.maxHp,targetStar=this.tick<(target.combat?.starUntil||0);
    // Strategy: swarm commits in packs, colossus fights unless broken, mystic kites; everyone flees a star.
    let mode='engage';
    if(targetStar&&!star)mode='flee';
    else if(!star&&hpFrac<.25)mode='flee';
    else if(!star&&this.tick<c.fatigue)mode='hold';
+   else if(!star&&a.behavior?.fleeing&&dist<240)mode='flee';
       else if(st.faction===2&&dist<130&&!star)mode='kite';
    else if(ratio>1.3*1.15&&dist<st.radius+target.stats.radius+40&&!star)mode='flee';
    c.engaged=mode==='engage';c.mode=mode;
-   const sign=mode==='engage'?1:mode==='flee'||mode==='kite'?-1:0,accel=.07*Math.min(1.4,this.bal?.aggression??1)*st.speed*(star?1.5:1)*dt;
+   const rhythm=updatePursuit(a,{targetId:target.id,mode,distance:dist,tick:this.tick,dt,panic:targetStar&&!star});dir=pursuitDirection(a,target,dx,dy,dist,mode,this.tick);
+   const sign=mode==='engage'?1:mode==='flee'||mode==='kite'?-1:0,accel=.07*Math.min(1.4,this.bal?.aggression??1)*st.speed*rhythm.pace*(mode==='engage'?1+.85*rhythm.burst:1)*(star?1.5:1)*dt;
    if(sign)for(const i of a.members){sim.vx[i]+=dir[0]*accel*sign;sim.vy[i]+=dir[1]*accel*sign;}
    // Face the target (tail turns faster).
    const want=Math.atan2(dir[1],dir[0])+(sign<0?Math.PI:0),diff=Math.atan2(Math.sin(want-b.heading),Math.cos(want-b.heading));b.av=(b.av||0)+clamp(diff,-1,1)*.004*st.turn*dt;

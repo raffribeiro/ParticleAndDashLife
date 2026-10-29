@@ -57,3 +57,5 @@ Referência única para qualquer mudança visual (Claude e Codex). Tokens CSS em
 
 - Após 15s de espera, a abertura passa a 30fps, bloom com no máximo três níveis e granulado estático. Logo, botão e paleta mantêm o desenho; Start restaura o perfil escolhido antes do charge. Sem mudanças de qualidade durante a simulação.
 - Sessões longas: snapshots com uma única mensagem em trânsito, eventos recentes limitados, cache de cores com 1.024 entradas e corpos limitados ao orçamento normal + quatro vagas de reserva. Fragmentos excedentes permanecem como matéria livre; logs automáticos de FPS desativados.
+
+- Perseguições alternam esforço e recuperação, com curvas suaves de velocidade por organismo. Fuga tem desvios leves; caçadores interceptam adiante do alvo. Arrancadas curtas podem vencer impasses e abrir contato, sem teleporte nem multiplicação de partículas. A escala e o número de patas continuam penalizando velocidade.
