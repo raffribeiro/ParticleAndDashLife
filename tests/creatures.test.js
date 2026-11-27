@@ -58,3 +58,5 @@ test('released fish drift from their current pose without swimming toward the fo
 });
 
 test('living strokes keep their adult opacity until death, including attached body parts',()=>{const c=new Creatures(1),f=fishAt('rect',100,100,0,1);c.list=[f];f.age=15;assert.equal(c.serialize()[0].life,.25);f.age=60;const adult=c.serialize()[0].life;assert.equal(adult,1);for(const role of [null,'leg','tail']){f.attachment=role?{role}:null;f.age=f.lifespan-1;assert.equal(c.serialize()[0].life,adult);}});
+
+test('dash producers emit births and confirmed deaths but reseed stays silent',()=>{const events=[],s=new Simulation(400,800,600,lcg(2)),c=new Creatures(9,event=>events.push(event));c.target=2;c.blast(s);assert.equal(events.filter(e=>e.id==='creature.birth').length,2);assert.ok(events.every(e=>e.origin==='big-bang'));events.length=0;const dying=c.list[0];dying.dead=true;c.step(s);assert.deepEqual(events,[{id:'creature.death',x:dying.x[5],y:dying.y[5],species:dying.species}]);events.length=0;c.reseed(10);assert.deepEqual(events,[]);});

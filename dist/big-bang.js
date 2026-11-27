@@ -1,5 +1,5 @@
 export class BigBang{
- constructor(sim){this.tick=0;this.hold=18;this.duration=60;this.launched=false;
+ constructor(sim,emitAudio=()=>{}){this.tick=0;this.hold=18;this.duration=60;this.launched=false;this.emitAudio=emitAudio;
   const radius=Math.max(1,Math.min(22,Math.min(sim.width,sim.height)*.035));
   this.originX=new Float32Array(sim.count);this.originY=new Float32Array(sim.count);
   for(let i=0;i<sim.count;i++){const angle=i*2.3999632297,r=radius*Math.sqrt(sim.rng());this.originX[i]=Math.cos(angle)*r/sim.width;this.originY[i]=Math.sin(angle)*r/sim.height;sim.x[i]=sim.width*.5+this.originX[i]*sim.width;sim.y[i]=sim.height*.5+this.originY[i]*sim.height;sim.vx[i]=sim.vy[i]=0;}
@@ -27,7 +27,7 @@ export class BigBang{
    }
    sim.gridReady=false;return true;
   }
-  if(!this.launched){this.launched=true;const speed=Math.min(sim.width,sim.height)*.018;
+  if(!this.launched){this.launched=true;this.emitAudio({id:'world.big-bang',x:sim.width/2,y:sim.height/2});const speed=Math.min(sim.width,sim.height)*.018;
    // Non-linear blast: each particle gets its own launch speed across an 80% range (slowest = 20% of the fastest,
    // skewed toward the slow end so a few shards fly far) and its own drag, so the cloud never expands as one shell.
    this.drag=new Float32Array(sim.count);

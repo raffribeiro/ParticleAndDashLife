@@ -1,12 +1,12 @@
-import {FACTION_CAP,factionOf} from './combat.js?v=1.45.0';
-import {inheritFeatures} from './features.js?v=1.45.0';
-import {ensureNeeds} from './needs.js?v=1.45.0';
-import {VALENCE,wrappedDelta} from './simulation.js?v=1.45.0';
-import {inheritTraits,reproductionRules} from './traits.js?v=1.45.0';
-import {createFish} from './creatures.js?v=1.45.0';
-import {SPECIES_PATTERN} from './simulation.js?v=1.45.0';
+import {FACTION_CAP,factionOf} from './combat.js?v=1.46.3';
+import {inheritFeatures} from './features.js?v=1.46.3';
+import {ensureNeeds} from './needs.js?v=1.46.3';
+import {VALENCE,wrappedDelta} from './simulation.js?v=1.46.3';
+import {inheritTraits,reproductionRules} from './traits.js?v=1.46.3';
+import {createFish} from './creatures.js?v=1.46.3';
+import {SPECIES_PATTERN} from './simulation.js?v=1.46.3';
 export class LifeCycle{
- constructor(target=300){this.target=target;this.requestedTarget=target;this.populationFactor=1;this.lastTrimAt=-Infinity;this.tick=0;this.births=0;this.catches=0;}
+ constructor(target=300,emitAudio=()=>{}){this.target=target;this.requestedTarget=target;this.populationFactor=1;this.lastTrimAt=-Infinity;this.tick=0;this.births=0;this.catches=0;this.emitAudio=emitAudio;}
  configurePopulation(requested=this.requestedTarget,factor=1){
   if(Number.isFinite(+requested))this.requestedTarget=Math.max(40,Math.min(12000,Math.round(+requested)));
   this.populationFactor=Number.isFinite(+factor)?Math.max(.01,Math.min(1,+factor)):1;
@@ -36,7 +36,7 @@ export class LifeCycle{
   const child=walkers.create(sim,[start,start+1,start+2]);child.clan=a.clan;child.heading=a.heading+.2;child.traits=inheritTraits(a,walkers.rng);inheritFeatures(a,child,walkers.rng);child.nextBirth=this.tick+reproductionRules(child).cooldown;a.nextBirth=this.tick+rules.cooldown;
   for(const i of a.members)sim.energy[i]=Math.max(.3,sim.energy[i]-rules.energyCost);
   if(addFish){const c=createFish('rect',creatures.rng,x+dx*55,y+dy*55,a.heading,type,creatures.nextId++);c.memory={clan:a.clan,partners:[],ticks:900};creatures.list.push(c);creatures.births++;}
-  a.needs.reserve=Math.max(0,a.needs.reserve-.25);a.fertility=0;this.births++;walkers.events.push({kind:'birth',x:x+dx*30,y:y+dy*30,species:type});return true;
+  a.needs.reserve=Math.max(0,a.needs.reserve-.25);a.fertility=0;this.births++;const event={x:x+dx*30,y:y+dy*30,species:type};walkers.events.push({kind:'birth',...event});this.emitAudio({id:'creature.birth',origin:'offspring',...event});return true;
  }
  spawn(sim,walkers,count){
   const added=[];for(let k=0;k<count;k++){const x=Math.random()*sim.width,y=Math.random()*sim.height,type=SPECIES_PATTERN[Math.floor(Math.random()*SPECIES_PATTERN.length)];added.push({x,y,vx:0,vy:0,type,energy:1,stage:0});walkers.events.push({kind:'birth',x,y,species:type});}

@@ -1,26 +1,31 @@
-import {benchmarkScene} from './device-benchmark.js?v=1.45.0';
-import {resizeWorld} from './world-resize.js?v=1.45.0';
-import {SceneInteraction} from './scene-interaction.js?v=1.45.0';
+import {benchmarkScene} from './device-benchmark.js?v=1.46.3';
+import {resizeWorld} from './world-resize.js?v=1.46.3';
+import {SceneInteraction} from './scene-interaction.js?v=1.46.3';
 const interaction=new SceneInteraction();
-import {BigBang} from './big-bang.js?v=1.45.0';
+import {BigBang} from './big-bang.js?v=1.46.3';
 let opening=null,awaitingFrame=false;
-import {LifeCycle} from './life-cycle.js?v=1.45.0';
-let life=new LifeCycle(),populationFactor=1;
-import {BehaviorCycle} from './behavior-cycle.js?v=1.45.0';
+import {LifeCycle} from './life-cycle.js?v=1.46.3';
+let life=null,populationFactor=1;
+import {BehaviorCycle} from './behavior-cycle.js?v=1.46.3';
 const behaviorCycle=new BehaviorCycle();let matrixRevision=-1;
-import {Ecology} from './ecology.js?v=1.45.0';
+import {Ecology} from './ecology.js?v=1.46.3';
 const ecology=new Ecology();
-import {Disturbances} from './disturbance.js?v=1.45.0';
-const disturbances=new Disturbances();let pendingEvent=null;
-import {Simulation} from './simulation.js?v=1.45.0';
-import {Creatures} from './creatures.js?v=1.45.0';
-import {Walkers} from './walkers.js?v=1.45.0';
-import {Combat} from './combat.js?v=1.45.0';
+import {Disturbances} from './disturbance.js?v=1.46.3';
+let disturbances=null,pendingEvent=null;
+import {Simulation} from './simulation.js?v=1.46.3';
+import {Creatures} from './creatures.js?v=1.46.3';
+import {Walkers} from './walkers.js?v=1.46.3';
+import {Combat} from './combat.js?v=1.46.3';
 const combat=new Combat();let lastPublish=0;
-const walkers=new Walkers();
-const creatures=new Creatures((Math.random()*2**32)>>>0);
-let sim=null,paused=false,visible=true,pointer=null,revision=0,timer=null;
+let walkers=null,creatures=null;
+let sim=null,paused=false,visible=true,pointer=null,revision=0,timer=null,audioGeneration=0;
 let backpressure=false,snapshotInFlight=false,snapshotPending=false,pendingStepMs=0;
+const AUDIO_QUEUE_LIMIT=24;
+let audioSequence=0,audioPending=[],audioInFlight=null;
+function flushAudio(){if(audioInFlight||!audioPending.length)return;const events=audioPending.splice(0,AUDIO_QUEUE_LIMIT),message={kind:'audio-events',revision:events[0].revision,generation:audioGeneration,sequence:events.at(-1).sequence,events};audioInFlight=message;postMessage(message);}
+function queueAudio(event){const next={...event,revision,sequence:++audioSequence};if(audioInFlight&&next.id!=='world.big-bang'){const replace=audioPending.findLastIndex(e=>e.id===next.id&&e.species===next.species&&e.origin===next.origin);if(replace>=0)audioPending.splice(replace,1);}if(audioInFlight&&audioPending.length>=AUDIO_QUEUE_LIMIT){const drop=audioPending.findIndex(e=>e.id!=='world.big-bang');if(drop>=0)audioPending.splice(drop,1);else if(next.id!=='world.big-bang')return;}audioPending.push(next);flushAudio();}
+function resetAudioChannel(nextRevision=revision,nextGeneration=audioGeneration){audioPending=[];audioSequence=0;revision=nextRevision;audioGeneration=nextGeneration;}
+life=new LifeCycle(300,queueAudio);disturbances=new Disturbances(queueAudio);walkers=new Walkers(Math.random,queueAudio);creatures=new Creatures((Math.random()*2**32)>>>0,queueAudio);
 function publish(ms=0){
  // Retain only recent visual events while a slow main thread is still consuming a snapshot.
  for(const events of [creatures.events,walkers.events])if(events?.length>32)events.splice(0,events.length-32);
@@ -28,23 +33,23 @@ function publish(ms=0){
  let mobilityMin=1.4,mobilityMax=.6;for(let i=0;i<sim.count;i++){mobilityMin=Math.min(mobilityMin,sim.mobility[i]);mobilityMax=Math.max(mobilityMax,sim.mobility[i]);}const events=[...(creatures.events||[]).splice(0),...walkers.events.splice(0)].slice(-16);const snapshot={paused,populationBudget:life.target,populationTotal:life.total(sim,creatures),populationRequested:life.requestedTarget,dragging:interaction.active,openingScale:opening?.particleScale??1,openingColorMix:opening?.colorMix??1,openingGlow:opening?.emission||0,openingWaiting:awaitingFrame,behavior:behaviorCycle.snapshot(sim),events,mobilityMin,mobilityMax,revision,count:sim.count,width:sim.width,height:sim.height,consumed:sim.consumed,stepMs:ms,disturbanceEvent:pendingEvent,disturbanceCount:disturbances.count,nextDisturbance:Math.max(0,disturbances.interval-disturbances.elapsed),creatures:creatures.serialize(),bonds:sim.bondPairs(),walkers:walkers.serialize(sim),combat:combat.serialize(walkers,sim),habitats:ecology.patches,ecosystem:{resting:[...creatures.list,...walkers.list].filter(c=>c.behavior?.resting).length,memories:creatures.list.filter(c=>c.memory).length,hunters:walkers.list.filter(a=>a.traits?.hunt>=.5).length,evaders:walkers.list.filter(a=>a.traits?.hunt<.5).length,births:life.births,hunting:walkers.list.filter(a=>a.behavior?.hunting).length,organisms:walkers.list.length,fragments:walkers.fragments||0,shed:walkers.shedCount||0,plans:walkers.list.reduce((m,w)=>(m[w.plan||'lizard']=(m[w.plan||'lizard']||0)+1,m),{}),eaten:walkers.eaten||0},creatureStats:creatures.stats(),changed:sim.changedIndices&&sim.changedIndices.size?Int32Array.from(sim.changedIndices):null};if(sim.changedIndices)sim.changedIndices.clear();const transfer=[];for(const key of ['x','y','vx','vy','type','energy','fx','size','pulse','minor']){if(!sim[key])continue;snapshot[key]=sim[key].slice();transfer.push(snapshot[key].buffer);}if(backpressure)snapshotInFlight=true;postMessage(snapshot,transfer);pendingEvent=null;}
 function schedule(){if(!sim||paused||!visible||awaitingFrame){clearTimeout(timer);timer=null;return;}if(timer!==null)return;timer=setTimeout(run,1000/60);}
 function run(){timer=null;if(!sim||paused||!visible||awaitingFrame)return;const start=performance.now();if(opening?.step(sim)){if(opening.launched){if(!opening.dashes){opening.dashes=true;creatures.blast(sim);}else creatures.drift(sim);}publish(performance.now()-start);timer=setTimeout(run,1000/60);return;}behaviorCycle.advance(sim,1/60);sim.step(1,pointer?.force?pointer:null);ecology.step(sim,creatures.list,walkers.list,pointer,1,walkers);creatures.step(sim,pointer);walkers.step(sim,1,creatures.list);life.step(sim,creatures,walkers,performance.now());combat.step(sim,walkers,creatures.list,creatures);{const p=sim.pulse;if(p)for(let i=0;i<sim.count;i++)p[i]=p[i]>.004?p[i]*.92:0;}{const ev=disturbances.advance(sim,1/60);if(ev)pendingEvent=ev;}if(pendingEvent?.kind==='pulse')creatures.scare(pendingEvent.x,pendingEvent.y,pendingEvent.radius,sim.width,sim.height);interaction.apply(sim,walkers,creatures);const elapsed=performance.now()-start;if(performance.now()-lastPublish>=1000/60-4){publish(elapsed);lastPublish=performance.now();}timer=setTimeout(run,Math.max(0,1000/60-(performance.now()-start)));}
-globalThis.onmessage=({data:m})=>{if(m.kind==='snapshot-ack'){snapshotInFlight=false;if(snapshotPending&&sim){snapshotPending=false;publish(pendingStepMs);}return;}if(m.kind==='benchmark'){benchmarkScene(m.options).then(result=>postMessage({kind:'benchmark-result',id:m.id,...result})).catch(error=>postMessage({kind:'benchmark-result',id:m.id,error:error.message}));return;}if(m.kind==='init'){backpressure=!!m.backpressure;sim=new Simulation(m.count,m.width,m.height);life=new LifeCycle(m.populationTarget??m.count);life.configurePopulation(m.populationTarget??m.count,populationFactor);opening=new BigBang(sim);awaitingFrame=!!m.waitForFrame;publish();}
+globalThis.onmessage=({data:m})=>{if(m.kind==='audio-ack'){if(audioInFlight&&m.revision===audioInFlight.revision&&m.generation===audioInFlight.generation&&m.sequence===audioInFlight.sequence){audioInFlight=null;flushAudio();}return;}if(m.kind==='snapshot-ack'){snapshotInFlight=false;if(snapshotPending&&sim){snapshotPending=false;publish(pendingStepMs);}return;}if(m.kind==='benchmark'){benchmarkScene(m.options).then(result=>postMessage({kind:'benchmark-result',id:m.id,...result})).catch(error=>postMessage({kind:'benchmark-result',id:m.id,error:error.message}));return;}if(m.kind==='init'){resetAudioChannel(0,m.audioGeneration??0);backpressure=!!m.backpressure;sim=new Simulation(m.count,m.width,m.height);life=new LifeCycle(m.populationTarget??m.count,queueAudio);life.configurePopulation(m.populationTarget??m.count,populationFactor);opening=new BigBang(sim,queueAudio);awaitingFrame=!!m.waitForFrame;publish();}
  if(!sim)return;
- if(m.kind==='reset'){interaction.cancel();revision=m.revision;sim.reset(m.count);life=new LifeCycle(m.populationTarget??m.count);life.configurePopulation(m.populationTarget??m.count,populationFactor);ecology.reset();behaviorCycle.manual(behaviorCycle.key);walkers.reset();combat.reset();creatures.reseed(creatures.seed+1);opening=new BigBang(sim);awaitingFrame=!!m.waitForFrame;disturbances.elapsed=0;disturbances.count=0;disturbances.wave=null;publish();}
+ if(m.kind==='reset'){interaction.cancel();resetAudioChannel(m.revision,m.audioGeneration??audioGeneration);sim.reset(m.count);life=new LifeCycle(m.populationTarget??m.count,queueAudio);life.configurePopulation(m.populationTarget??m.count,populationFactor);ecology.reset();behaviorCycle.manual(behaviorCycle.key);walkers.reset();combat.reset();creatures.reseed(creatures.seed+1);opening=new BigBang(sim,queueAudio);awaitingFrame=!!m.waitForFrame;disturbances.elapsed=0;disturbances.count=0;disturbances.wave=null;publish();}
  if(m.kind==='start-opening'&&m.revision===revision)awaitingFrame=false;
  if(m.kind==='spawn-creatures'){creatures.reseed(m.seed);creatures.step(sim,null);publish();}
- if(m.kind==='disturb'){pendingEvent=disturbances.trigger(sim);if(pendingEvent.kind==='pulse')creatures.scare(pendingEvent.x,pendingEvent.y,pendingEvent.radius,sim.width,sim.height);publish();}
+ if(m.kind==='disturb'&&(m.revision===undefined||m.revision===revision)){pendingEvent=disturbances.trigger(sim,null,'manual');if(pendingEvent.kind==='pulse')creatures.scare(pendingEvent.x,pendingEvent.y,pendingEvent.radius,sim.width,sim.height);publish();}
  if(m.kind==='interact'&&m.revision===revision){
   if(m.action==='cancel'||!visible)interaction.cancel();
   else if(!awaitingFrame&&(!opening||opening.tick>=opening.duration)){
    const valid=Number.isFinite(m.x)&&Number.isFinite(m.y);
    if(m.action==='grab'&&valid)interaction.pick(sim,walkers,creatures,m.x,m.y);
    if((m.action==='move'||m.action==='drop')&&valid){interaction.move(m.x,m.y);interaction.apply(sim,walkers,creatures);}
-   if(m.action==='click'&&valid){interaction.cancel();pendingEvent=disturbances.trigger(sim,{x:m.x,y:m.y});creatures.scare(pendingEvent.x,pendingEvent.y,pendingEvent.radius,sim.width,sim.height);}
+   if(m.action==='click'&&valid){interaction.cancel();pendingEvent=disturbances.trigger(sim,{x:m.x,y:m.y},'tap');creatures.scare(pendingEvent.x,pendingEvent.y,pendingEvent.radius,sim.width,sim.height);}
    if(m.action==='drop')interaction.cancel();
   }
   if(paused||m.action!=='move')publish();
  }
  if(m.kind==='population-budget'){populationFactor=Math.max(.01,Math.min(1,+m.factor||1));life.configurePopulation(m.target,populationFactor);if(paused)publish();}
- if(m.kind==='config'){const pauseChanged=paused!==m.paused;if(m.populationScale!==undefined)populationFactor=Math.max(.01,Math.min(1,+m.populationScale||1));life.configurePopulation(m.populationTarget??life.requestedTarget,populationFactor);behaviorCycle.configure(m.behaviorCycle);disturbances.configure(m.disturbance);paused=m.paused;visible=m.visible;if(!visible)interaction.cancel();pointer=m.pointer;if(m.matrixRevision===undefined||m.matrixRevision!==matrixRevision){sim.matrix=m.matrix;matrixRevision=m.matrixRevision;behaviorCycle.manual(m.behaviorKey);}sim.radius=m.radius;sim.force=m.force;sim.ecology=m.ecology;if(m.dynamicMobility!==undefined)sim.dynamicMobility=!!m.dynamicMobility;if(m.inertia!==undefined)sim.setInertia(m.inertia);if(m.bonding!==undefined)sim.bonding=!!m.bonding;walkers.configure(m.walkers);combat.configure(m.combat);if(m.wiggle!==undefined)sim.wiggle=Math.max(0,Math.min(2,+m.wiggle||0));creatures.configure(m.creatures);if(sim.width!==m.width||sim.height!==m.height){interaction.cancel();resizeWorld(sim,creatures,walkers,m.width,m.height);publish();}if(pauseChanged)publish();}
+ if(m.kind==='config'){const pauseChanged=paused!==m.paused;if(m.audioGeneration!==undefined&&m.audioGeneration!==audioGeneration)resetAudioChannel(revision,m.audioGeneration);if(m.populationScale!==undefined)populationFactor=Math.max(.01,Math.min(1,+m.populationScale||1));life.configurePopulation(m.populationTarget??life.requestedTarget,populationFactor);behaviorCycle.configure(m.behaviorCycle);disturbances.configure(m.disturbance);paused=m.paused;visible=m.visible;if(!visible)interaction.cancel();pointer=m.pointer;if(m.matrixRevision===undefined||m.matrixRevision!==matrixRevision){sim.matrix=m.matrix;matrixRevision=m.matrixRevision;behaviorCycle.manual(m.behaviorKey);}sim.radius=m.radius;sim.force=m.force;sim.ecology=m.ecology;if(m.dynamicMobility!==undefined)sim.dynamicMobility=!!m.dynamicMobility;if(m.inertia!==undefined)sim.setInertia(m.inertia);if(m.bonding!==undefined)sim.bonding=!!m.bonding;walkers.configure(m.walkers);combat.configure(m.combat);if(m.wiggle!==undefined)sim.wiggle=Math.max(0,Math.min(2,+m.wiggle||0));creatures.configure(m.creatures);if(sim.width!==m.width||sim.height!==m.height){interaction.cancel();resizeWorld(sim,creatures,walkers,m.width,m.height);publish();}if(pauseChanged)publish();}
  schedule();};

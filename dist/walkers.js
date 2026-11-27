@@ -1,11 +1,11 @@
-import {stepSoftStrand} from './soft-strand.js?v=1.45.0';
-import {featureLevel} from './features.js?v=1.45.0';
-import {factionOf,FACTION_OF} from './combat.js?v=1.45.0';
+import {stepSoftStrand} from './soft-strand.js?v=1.46.3';
+import {featureLevel} from './features.js?v=1.46.3';
+import {factionOf,FACTION_OF} from './combat.js?v=1.46.3';
 // Walkers: bonded particle clusters that grow line legs and walk.
 // Every FORM_EVERY steps, connected bond components of ≥3 particles may become walkers.
 // Legs hang from the cluster's outer particles (2-bone IK), step in alternating groups,
 // and push the cluster during each stride. Anatomy fades as its connected body falls apart.
-import {wrappedDelta,VALENCE} from './simulation.js?v=1.45.0';
+import {wrappedDelta,VALENCE} from './simulation.js?v=1.46.3';
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Size sets the general speed (small = fast, big = slow); the pace gene adds individual variation on top.
 export const sizePace=n=>Math.max(.3,Math.min(1.3,Math.pow(4/Math.max(1,n),.65)));
@@ -41,7 +41,8 @@ export function localComponents(members,edges){
  return [...groups.values()].map(s=>[...s]);
 }
 export class Walkers {
- constructor(rng=Math.random){this.rng=rng;this.list=[];this.enabled=true;this.max=5;this.tick=0;this.formed=0;this.nextId=1;this.events=[];}
+ constructor(rng=Math.random,emitAudio=()=>{}){this.rng=rng;this.list=[];this.enabled=true;this.max=5;this.tick=0;this.formed=0;this.nextId=1;this.events=[];this.emitAudio=emitAudio;}
+ event(kind,event){this.events.push({kind,...event});this.emitAudio({id:'creature.'+kind,...event});}
  configure(o){if(!o)return;if(o.enabled!==undefined)this.enabled=!!o.enabled;if(o.max!==undefined)this.max=clamp(Math.round(+o.max||0),0,20);}
  reset(){this.list=[];this.tick=0;this.events=[];}
  // Follow particle index changes made by Simulation.rebuild (swap-remove).
@@ -116,7 +117,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   const pieces=[];
   for(const part of keep.slice(1)){if(this.list.length>=this.max+4)break;const c=this.create(sim,part);c.faction=w.faction;c.traits=w.traits?{...w.traits}:undefined;c.features=w.features?{...w.features}:undefined;c.cohesion=.6;pieces.push(c);
    for(const i of part){const a=this.rng()*Math.PI*2;sim.vx[i]+=Math.cos(a)*1.2;sim.vy[i]+=Math.sin(a)*1.2;}}
-  this.fragments=(this.fragments||0)+1;const [x,y]=this.centroid(sim,w.members);this.events.push({kind:'break',x,y,species:sim.type[w.members[0]]});
+  this.fragments=(this.fragments||0)+1;const [x,y]=this.centroid(sim,w.members);this.event('break',{x,y,species:sim.type[w.members[0]]});
   return pieces;
  }
  // Low diversity encourages new bodies to assemble from local free matter; no births or teleports.
@@ -176,7 +177,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
   const valid=new Set(a.legs.map(l=>'leg:'+l.hip));
   const occupied=new Set(fish.filter(c=>c.attachment?.walker===a.id).map(c=>c.attachment.slot));
   for(const c of fish)if(c.attachment?.walker===b.id){if((c.attachment.role==='leg'&&!valid.has(c.attachment.slot))||occupied.has(c.attachment.slot))this.releaseFish(c);else{c.attachment.walker=a.id;c.attachment.clan=a.clan;occupied.add(c.attachment.slot);}}
-  this.list=this.list.filter(w=>w!==b);this.events.push({kind:'assemble',x:sim.x[a.members[0]],y:sim.y[a.members[0]],species:sim.type[a.members[0]]});
+  this.list=this.list.filter(w=>w!==b);this.event('assemble',{x:sim.x[a.members[0]],y:sim.y[a.members[0]],species:sim.type[a.members[0]]});
  }
  releaseFish(c){
   if(!c.attachment)return;
@@ -211,13 +212,13 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
    const groups=localComponents(w.members,edges).sort((a,b)=>b.length-a.length),alive=groups[0]||[];
    const connected=alive.length>=3;
    w.cohesion=clamp(w.cohesion+(connected?dt/45:-dt/240),0,1);
-   if(connected&&w.cohesion>.65&&!w.celebrated){w.celebrated=true;const [x,y]=this.centroid(sim,w.members);this.events.push({kind:'assemble',x,y,species:sim.type[w.members[0]]});}
+   if(connected&&w.cohesion>.65&&!w.celebrated){w.celebrated=true;const [x,y]=this.centroid(sim,w.members);this.event('assemble',{x,y,species:sim.type[w.members[0]]});}
    const valid=w.members.filter(i=>i<sim.count);
    w.fractureTime=connected&&alive.length===valid.length?0:(w.fractureTime||0)+dt;
    w.members=connected&&w.fractureTime>=180?alive:valid;
    w.legs=w.legs.filter(l=>w.members.includes(l.hip));
    const keep=w.members.length>=3&&(connected||w.cohesion>0);
-   if(!keep&&w.celebrated&&w.body)this.events.push({kind:'break',x:w.body.x,y:w.body.y,species:sim.type[w.members[0]]??0});
+   if(!keep&&w.celebrated&&w.body)this.event('break',{x:w.body.x,y:w.body.y,species:sim.type[w.members[0]]??0});
    return keep;
   });
   // Form new walkers from bonded clusters.
@@ -301,7 +302,7 @@ if(w.fusion?.bridge){const p=w.fusion.bridge;w.fusion.bridge=now.has(p[0])&&now.
      c.recruitAfter=this.tick+180;this.releaseFish(c);c.legJoints=null;c.legStretch=1;
      l.init=false;l.stretch=1;
      w.legCount=fish.filter(f=>f.attachment?.walker===w.id&&f.attachment.role==='leg').length;
-     this.events.push({kind:'break',x:c.x[0],y:c.y[0],species:c.species});continue;
+     this.event('break',{x:c.x[0],y:c.y[0],species:c.species});continue;
     }
     const desired=clamp(d/(base*.94),1,1.28);
     l.stretch=(l.stretch??1)+(desired-(l.stretch??1))*(1-Math.exp(-.18*dt));

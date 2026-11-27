@@ -1,5 +1,5 @@
-import {shiftFish} from './body-transform.js?v=1.45.0';
-import {stepSoftStrand} from './soft-strand.js?v=1.45.0';
+import {shiftFish} from './body-transform.js?v=1.46.3';
+import {stepSoftStrand} from './soft-strand.js?v=1.46.3';
 // Procedural fish drawn as literal rectangles: kinematic spines (follow-the-leader with bend limits) steered by
 // explicit world rules. Every rule reads the same world the particles live in:
 //  1 hunger    – seek the prey particle species (same food chain as particles)
@@ -17,8 +17,8 @@ import {stepSoftStrand} from './soft-strand.js?v=1.45.0';
 //                into particles; clustered same-species particles condense into new fish, keeping
 //                the fish count around the target. Biomass (free particles + PER_FISH per fish +
 //                stomach contents) is conserved.
-import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.45.0';
-import {SPECIES_SHARE} from './color.js?v=1.45.0';
+import {wrappedDelta,SPECIES_PATTERN} from './simulation.js?v=1.46.3';
+import {SPECIES_SHARE} from './color.js?v=1.46.3';
 export const PER_FISH=4,STOMACH=3,MIN_FREE=40;
 export const SIZE=1.15;
 const TAU=Math.PI*2,clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -65,7 +65,7 @@ export function createFish(style,rng,x,y,heading,species,id){
 function shift(c,dx,dy){for(let i=0;i<c.x.length;i++){c.x[i]+=dx;c.y[i]+=dy;}}
 
 export class Creatures {
- constructor(seed=7){this.enabled=true;this.target=30;this.wake=true;this.moodEnabled=true;this.moodPeriod=45;this.list=[];this.nextId=1;this.reseed(seed);}
+ constructor(seed=7,emitAudio=()=>{}){this.enabled=true;this.target=30;this.wake=true;this.moodEnabled=true;this.moodPeriod=45;this.list=[];this.nextId=1;this.emitAudio=emitAudio;this.reseed(seed);}
  reseed(seed){this.seed=seed>>>0;this.rng=seededRandom(this.seed);this.list=[];this.started=false;this.time=Math.round(this.moodPeriod*60*.42);this.bites=0;this.escapes=0;this.births=0;this.deaths=0;this.events=[];this.excreted=0;this.tick=0;}
  configure(o){if(!o)return;if(o.enabled!==undefined)this.enabled=!!o.enabled;if(o.count!==undefined)this.target=clamp(Math.round(Number(o.count)||0),0,60);if(o.wake!==undefined)this.wake=!!o.wake;if(o.mood!==undefined)this.moodEnabled=!!o.mood;if(o.moodPeriod!==undefined)this.moodPeriod=clamp(Number(o.moodPeriod)||45,10,300);}
  // Rule 10: +1 friends, −1 enemies. A tide with plateaus (tanh), shifted 0.5 rad per colour. Off = always enemies.
@@ -87,7 +87,7 @@ export class Creatures {
  excrementType(eaten){let total=0;for(let t=0;t<6;t++)if(t!==eaten)total+=SPECIES_SHARE[t];let r=this.rng()*total;for(let t=0;t<6;t++){if(t===eaten)continue;if((r-=SPECIES_SHARE[t])<=0)return t;}return (eaten+1)%6;}
  excrete(c,item){const n=c.x.length,tx=c.x[n-1]-c.x[n-2],ty=c.y[n-1]-c.y[n-2],l=Math.hypot(tx,ty)||1;this.added.push({x:c.x[n-1]+tx/l*3,y:c.y[n-1]+ty/l*3,vx:tx/l*1.3+c.vx*.3,vy:ty/l*1.3+c.vy*.3,type:this.excrementType(item.type),energy:.7,stage:0});this.excreted++;}
  dissolve(c){
-  if(c.dead)(this.events||(this.events=[])).push({kind:'death',x:c.x[Math.floor(c.x.length/2)],y:c.y[Math.floor(c.y.length/2)],species:c.species});
+  if(c.dead){const event={x:c.x[Math.floor(c.x.length/2)],y:c.y[Math.floor(c.y.length/2)],species:c.species};(this.events||(this.events=[])).push({kind:'death',...event});this.emitAudio({id:'creature.death',...event});}
   const n=c.x.length;for(let k=0;k<PER_FISH;k++){const i=Math.min(n-1,Math.round(k*(n-1)/(PER_FISH-1))),a=this.rng()*TAU,v=.6+this.rng()*1.2;this.added.push({x:c.x[i],y:c.y[i],vx:Math.cos(a)*v+c.vx*.4,vy:Math.sin(a)*v+c.vy*.4,type:c.species,energy:1.4,stage:.5});}
   for(const item of c.stomach)this.excrete(c,item);c.stomach=[];this.deaths++;
  }
@@ -106,7 +106,7 @@ export class Creatures {
   for(const c of this.list)if(c.dead)this.dissolve(c);
   this.list=this.list.filter(c=>!c.dead);
   if(this.tick%15===0&&this.list.length<this.target){const deficit=this.target-this.list.length,chance=Math.min(1,.25+deficit/Math.max(1,this.target));
-   for(let k=0;k<Math.min(3,deficit);k++){if(this.rng()>chance)continue;const seed=this.randomFree(sim);if(seed>=0&&this.condense(sim,seed,30)){this.births++;const c=this.list.at(-1);(this.events||(this.events=[])).push({kind:'birth',x:c.x[0],y:c.y[0],species:c.species});}}}
+   for(let k=0;k<Math.min(3,deficit);k++){if(this.rng()>chance)continue;const seed=this.randomFree(sim);if(seed>=0&&this.condense(sim,seed,30)){this.births++;const c=this.list.at(-1),event={x:c.x[0],y:c.y[0],species:c.species};(this.events||(this.events=[])).push({kind:'birth',...event});this.emitAudio({id:'creature.birth',origin:'condense',...event});}}}
  }
  apply(sim){if(this.removed.size||this.added.length)sim.rebuild(this.removed,this.added);this.removed=new Set();this.added=[];}
  resize(oldW,oldH,w,h){for(const c of this.list){shiftFish(c,c.x[0]/oldW*w-c.x[0],c.y[0]/oldH*h-c.y[0],false);}}
@@ -117,7 +117,7 @@ export class Creatures {
   for(let k=0;k<this.target*8&&this.list.length<this.target;k++){const seed=this.randomFree(sim);if(seed>=0)this.condense(sim,seed,220);}
   for(const c of this.list){const a=this.rng()*TAU;c.heading=a;c.blastV=speed*2.1*(.2+.8*Math.pow(this.rng(),1.6));c.blastDrag=.035+this.rng()*.06;c.burst=40;
    // Lay the body out straight along the launch direction, centred on the core.
-   for(let i=0;i<c.x.length;i++){c.x[i]=cx-Math.cos(a)*c.spacing*i;c.y[i]=cy-Math.sin(a)*c.spacing*i;}}
+   for(let i=0;i<c.x.length;i++){c.x[i]=cx-Math.cos(a)*c.spacing*i;c.y[i]=cy-Math.sin(a)*c.spacing*i;}this.emitAudio({id:'creature.birth',origin:'big-bang',x:c.x[0],y:c.y[0],species:c.species});}
   this.apply(sim);
  }
  drift(sim,dt=1){const W=sim.width,H=sim.height;for(const c of this.list){const v=c.blastV||0;if(v<.05)continue;const dx=Math.cos(c.heading)*v*dt,dy=Math.sin(c.heading)*v*dt;

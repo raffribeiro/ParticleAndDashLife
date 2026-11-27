@@ -43,6 +43,23 @@ npm ci
 npm run build:opening
 ```
 
+## Gatilhos de áudio locais
+
+O áudio é opcional e vem desligado: `dist/audio-map.js` exporta um mapa vazio, portanto a página não cria `AudioContext` nem requisita arquivos de som. Para usar sons próprios, crie `dist/audio/`, copie os arquivos locais para essa pasta e associe caminhos relativos no objeto `audioMap`, por exemplo:
+
+```js
+export const audioMap=Object.freeze({
+  'world.big-bang':'audio/big-bang.ogg',
+  'world.pulse':'audio/pulse.ogg'
+});
+```
+
+IDs disponíveis: `ui.start`, `world.big-bang`, `world.pulse`, `creature.birth`, `creature.death`, `creature.assemble` e `creature.break`. Não há mídia incluída no projeto. Quando o mapa tem arquivos, a página cria o `AudioContext` antes do gesto e prepara a mídia sem chamar `resume()` nem criar source; no Chrome desktop ele normalmente permanece suspenso pela autoplay policy. O primeiro clique aceito em **Start Simulation** desbloqueia o contexto e toca `ui.start` uma vez se seu buffer já estiver pronto. O Start nunca aguarda áudio. Em carregamento frio, arquivo ausente ou decode inválido, o evento daquele instante é descartado e não toca atrasado quando a mídia termina; eventos futuros podem usar buffers que ficarem prontos. A reprodução usa no máximo quatro vozes e descarta excessos, sem fila tardia.
+
+`dist/audio-factory.js` é o único ponto de composição do áudio na app. `createAppAudio()` sempre envolve a factory com o gate do contrato; não conecte middleware diretamente em `app.js`. O gate valida revisão e geração do envelope, revisão e sequência monotônica de cada evento, deduplica por high-water da partida e descarta eventos incompatíveis com pausa ou aba oculta antes de chamar qualquer adaptador. Reset e mudanças de geração atualizam essa fronteira sem reabrir replay antigo. O WebAudio mantém proteções próprias apenas como defesa de playback; elas não substituem o gate.
+
+Para trocar Web Audio por um middleware, mantenha `app.js`, o worker e a simulação intactos e injete a `factory` em `createAppAudio`. O adaptador deve ser passivo quanto ao contrato e expor a lifecycle síncrona `prepare()`, `acceptStart(event)`, `setState(state)`, `handle(message)` e `stop()`: não invente IDs, não filtre revisão e não deduplique. `prepare()` não pode tocar som. No primeiro gesto aceito, a app cria explicitamente `{id:'ui.start', origin:'app', revision, generation}`; `setupAudioStart()` atualiza o estado e passa esse mesmo objeto a `acceptStart(event)` ainda na pilha síncrona do clique. `handle()` recebe, na ordem original e sem conversão, somente eventos do worker aprovados pelo gate, preservando `x`, `y`, `species`, `origin`, `revision` e `sequence`. A policy de vozes, buffers, falhas de mídia e reprodução tardia pertence ao adaptador. Mesmo se `handle()` descartar o lote ou lançar, a app envia em `finally` o ACK do envelope original, com o `sequence` original, evitando bloquear o canal do worker.
+
 ## Licença
 
 Copyright © 2026 raffribeiro.
